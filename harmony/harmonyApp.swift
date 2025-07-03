@@ -11,7 +11,30 @@ import SwiftUI
 struct harmonyApp: App {
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            MainView()
         }
     }
+}
+
+struct MainView: View {
+    var body: some View {
+        TabView {
+            Tab("Home", systemImage: "house") {
+                HomeView()
+            }
+            Tab("Radio", systemImage: "antenna.radiowaves.left.and.right") {
+                
+            }
+            Tab("Library", systemImage: "play.square.stack") {
+                
+            }
+            Tab("Search", systemImage: "magnifyingglass") {
+                
+            }
+        }
+    }
+}
+
+#Preview {
+    MainView()
 }
