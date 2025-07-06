@@ -6,9 +6,11 @@
 //
 
 import SwiftUI
+import MusicKit
 
 @main
 struct harmonyApp: App {
+    
     var body: some Scene {
         WindowGroup {
             MainView()
@@ -26,7 +28,7 @@ struct MainView: View {
                 
             }
             Tab("Library", systemImage: "play.square.stack") {
-                
+                LibraryView()
             }
             Tab("Search", systemImage: "magnifyingglass") {
                 
