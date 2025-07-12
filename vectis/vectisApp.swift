@@ -9,7 +9,17 @@ import SwiftUI
 import MusicKit
 
 @main
-struct harmonyApp: App {
+struct vectisApp: App {
+    
+    init() {
+        Task.detached {
+            let authorization = await MusicAuthorization.request()
+            if authorization == .denied {
+                //TODO: Alert user to denied
+            }
+        }
+        
+    }
     
     var body: some Scene {
         WindowGroup {

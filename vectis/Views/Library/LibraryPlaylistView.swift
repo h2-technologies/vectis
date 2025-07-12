@@ -10,8 +10,6 @@ import MusicKit
 
 struct LibraryPlaylistView: View {
     
-    
-    
     var body: some View {
         ScrollView {
             VStack (alignment: .leading) {
@@ -20,11 +18,29 @@ struct LibraryPlaylistView: View {
                     .fontWeight(.bold)
                 
                 LibraryPlaylistButton("Playlist 1")
+                LibraryPlaylistButton("Playlist 2")
+                LibraryPlaylistButton("Playlist 3")
+                LibraryPlaylistButton("Playlist 4")
+                LibraryPlaylistButton("Playlist 5")
+                
                 
             }
         }
         .padding(.leading, 15)
+        .onAppear() {
+            Task {
+                try await loadLibraryPlaylists()
+            }
+        }
     }
+    
+    @MainActor
+    func loadLibraryPlaylists() async throws {
+        let request = MusicLibraryRequest<Playlist>()
+        let response = try await request.response()
+        print(response)
+    }
+        
 }
 
 

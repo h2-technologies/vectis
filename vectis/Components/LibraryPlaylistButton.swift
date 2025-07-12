@@ -18,7 +18,10 @@ struct LibraryPlaylistButton: View {
     var body: some View {
         HStack {
             //TODO: implement star for favorites
-            Rectangle().frame(width: 75, height: 75)
+            Rectangle()
+                .frame(width: 75, height: 75)
+                .cornerRadius(5)
+                .padding(.trailing, 10)
             Text(label)
             Spacer()
             Image(systemName: "chevron.right")
