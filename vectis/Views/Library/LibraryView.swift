@@ -17,6 +17,7 @@ struct LibraryView: View {
                         NavigationLink (destination: LibraryPlaylistView()) {
                             LibraryCategoryButton("Playlists", buttonImage: "music.note.list")
                         }
+                        .tint(.white)
                         
                         LibraryCategoryButton("Artists", buttonImage: "music.microphone")
                         

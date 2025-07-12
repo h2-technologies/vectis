@@ -10,6 +10,8 @@ import MusicKit
 
 struct LibraryPlaylistView: View {
     
+    @State var playlists: MusicItemCollection<Playlist>?
+    
     var body: some View {
         ScrollView {
             VStack (alignment: .leading) {
@@ -17,11 +19,18 @@ struct LibraryPlaylistView: View {
                     .font(.title)
                     .fontWeight(.bold)
                 
-                LibraryPlaylistButton("Playlist 1")
-                LibraryPlaylistButton("Playlist 2")
-                LibraryPlaylistButton("Playlist 3")
-                LibraryPlaylistButton("Playlist 4")
-                LibraryPlaylistButton("Playlist 5")
+                if (playlists == nil) {
+                    Text("No playlists found")
+                } else {
+                    ForEach(playlists!) { playlist in
+                        if playlist == playlists!.last {
+                            LibraryPlaylistButton(playlist.name, playlist.artwork, last: true)
+                        } else {
+                            LibraryPlaylistButton(playlist.name, playlist.artwork)
+                        }
+                        
+                    }
+                }
                 
                 
             }
@@ -38,7 +47,8 @@ struct LibraryPlaylistView: View {
     func loadLibraryPlaylists() async throws {
         let request = MusicLibraryRequest<Playlist>()
         let response = try await request.response()
-        print(response)
+        
+        playlists = response.items
     }
         
 }
