@@ -23,10 +23,26 @@ struct LibraryPlaylistView: View {
                     Text("No playlists found")
                 } else {
                     ForEach(playlists!) { playlist in
-                        if playlist == playlists!.last {
-                            LibraryPlaylistButton(playlist.name, playlist.artwork, last: true)
-                        } else {
-                            LibraryPlaylistButton(playlist.name, playlist.artwork)
+                        NavigationLink(destination: PlaylistView(playlist)) {
+                            HStack {
+                                //TODO: implement star for favorites
+                                ArtworkImage(playlist.artwork!, width: 75)
+                                    .frame(width: 75, height: 75)
+                                    .cornerRadius(5)
+                                    .padding(.trailing, 10)
+                                
+                                Text(playlist.name)
+                                Spacer()
+                                Image(systemName: "chevron.right")
+                            }
+                            .padding(.leading)
+                            .padding(.trailing)
+                            .padding(.bottom, 2.5)
+                            .foregroundStyle(.white)
+                        }
+                        
+                        if playlists!.last != playlist {
+                            Rectangle().frame(width: 365, height: 1).foregroundStyle(Color.gray)
                         }
                         
                     }
