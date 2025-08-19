@@ -10,7 +10,7 @@ import MusicKit
 
 struct PlaylistView: View {
     
-    var playlist: MusicItemCollection<Playlist>.Element
+    @State var playlist: MusicItemCollection<Playlist>.Element
     
     init(_ playlist: MusicItemCollection<Playlist>.Element) {
         self.playlist = playlist
@@ -40,10 +40,10 @@ struct PlaylistView: View {
                     .frame(height: 40)
                     .foregroundStyle(.pink)
                 }
-                    .frame(width: 150, alignment: .center)
-                    .background(Color(red: 80/255, green: 90/255, blue: 90/255))
-                    .cornerRadius(20)
-                    
+                .frame(width: 150, alignment: .center)
+                .background(Color(red: 80/255, green: 90/255, blue: 90/255))
+                .cornerRadius(20)
+                
                 
                 Button {
                     
@@ -55,38 +55,57 @@ struct PlaylistView: View {
                     .frame(height: 40)
                     .foregroundStyle(.pink)
                 }
-                    .frame(width: 150, alignment: .center)
-                    .background(Color(red: 80/255, green: 90/255, blue: 90/255))
-                    .cornerRadius(20)
+                .frame(width: 150, alignment: .center)
+                .background(Color(red: 80/255, green: 90/255, blue: 90/255))
+                .cornerRadius(20)
             }.padding(.top, 10)
         }
-    
+        
         Rectangle().frame(width:300, height: 1)
             .foregroundStyle(.gray)
             .padding(.top, 5)
         
-        VStack {
-            ForEach(playlist.tracks!) { track in
-                //TODO: Implement song view
-                HStack {
-                    //TODO: implement star for favorites
-                    ArtworkImage(track.artwork!, width: 75)
-                        .frame(width: 75, height: 75)
-                        .cornerRadius(5)
-                        .padding(.trailing, 10)
-                    
-                    Text(track.title)
-                    Spacer()
-                    Image(systemName: "chevron.right")
+        if (playlist.tracks == nil) {
+            Text("Loading tracks")
+        } else {
+            VStack {
+                ForEach(playlist.tracks!) { track in
+                    //TODO: Implement song view
+                    HStack {
+                        //TODO: implement star for favorites
+                        ArtworkImage(track.artwork!, width: 75)
+                            .frame(width: 75, height: 75)
+                            .cornerRadius(5)
+                            .padding(.trailing, 10)
+                        
+                        Text(track.title)
+                        Spacer()
+                        Image(systemName: "chevron.right")
+                    }
+                    .padding(.leading)
+                    .padding(.trailing)
+                    .padding(.bottom, 2.5)
+                    .foregroundStyle(.white)
                 }
-                .padding(.leading)
-                .padding(.trailing)
-                .padding(.bottom, 2.5)
-                .foregroundStyle(.white)
+            }
+            .onAppear() {
+                print("Running onAppear")
+                Task {
+                    print("Running load task")
+                    try await loadPlaylistTracks(self.playlist)
+                }
             }
         }
         
-        Spacer()
         
+        
+        Spacer()
+    }
+    
+    @MainActor
+    func loadPlaylistTracks(_ pl: MusicItemCollection<Playlist>.Element) async throws {
+        //Troubleshoot
+        print(await MusicAuthorization.request())
+        self.playlist = try await pl.with([.tracks])
     }
 }

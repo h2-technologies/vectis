@@ -20,11 +20,22 @@
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
+/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+		AF2B873C2E3CEEBF0020E876 /* Exceptions for "vectis" folder in "Copy Bundle Resources" phase from "vectis" target */ = {
+			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
+			buildPhase = AF0C4C432E162D930010133E /* Resources */;
+			membershipExceptions = (
+				vectis.entitlements,
+			);
+		};
+/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		AF0C4C472E162D930010133E /* vectis */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				AF50611B2E22A0B00094EEF4 /* Exceptions for "vectis" folder in "vectis" target */,
+				AF2B873C2E3CEEBF0020E876 /* Exceptions for "vectis" folder in "Copy Bundle Resources" phase from "vectis" target */,
 			);
 			path = vectis;
 			sourceTree = "<group>";
@@ -264,6 +275,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "$(PROJECT_NAME)/$(PROJECT_NAME).entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = R4B2HA4TUA;
@@ -297,6 +309,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "$(PROJECT_NAME)/$(PROJECT_NAME).entitlements";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = R4B2HA4TUA;

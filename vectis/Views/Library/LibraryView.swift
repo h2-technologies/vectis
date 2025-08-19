@@ -10,9 +10,14 @@ import MusicKit
 
 struct LibraryView: View {
     var body: some View {
-        NavigationView {
+        NavigationStack {
             ScrollView {
                 VStack (alignment: .leading) {
+                    Text("Library")
+                        .font(.title)
+                        .fontWeight(.bold)
+                        .padding(.bottom, 15)
+                    
                     VStack {
                         NavigationLink (destination: LibraryPlaylistView()) {
                             LibraryCategoryButton("Playlists", buttonImage: "music.note.list")
@@ -28,7 +33,7 @@ struct LibraryView: View {
                     .padding(.leading, -15)
                     
                     Text("Recently Added")
-                        .font(.title)
+                        .font(.title2)
                         .fontWeight(.bold)
                     
                     VStack {

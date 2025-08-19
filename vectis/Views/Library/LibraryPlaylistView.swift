@@ -57,12 +57,17 @@ struct LibraryPlaylistView: View {
                 try await loadLibraryPlaylists()
             }
         }
+        
     }
     
     @MainActor
     func loadLibraryPlaylists() async throws {
         let request = MusicLibraryRequest<Playlist>()
         let response = try await request.response()
+        
+        response.items.forEach { playlist in
+            await playlist.with([.tracks])
+        }
         
         playlists = response.items
     }
