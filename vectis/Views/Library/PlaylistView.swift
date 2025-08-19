@@ -17,17 +17,21 @@ struct PlaylistView: View {
     }
     
     var body: some View {
-        VStack {
-            ArtworkImage(playlist.artwork!, width: 150)
-                .frame(width: 150, height: 150)
-                .padding(.bottom)
+        ScrollView {
+            if let artwork = playlist.artwork {
+                ArtworkImage(artwork, width: 150)
+                    .frame(width: 150, height: 150)
+                    .padding(.bottom)
+            }
             
             Text(playlist.name)
                 .bold()
             
-            Text("Updated \(RelativeDateTimeFormatter().localizedString(for: playlist.lastModifiedDate!, relativeTo: Date()))")
-                .font(.caption)
-                .foregroundStyle(Color.gray)
+            if let lastModifiedDate = playlist.lastModifiedDate {
+                Text("Updated \(RelativeDateTimeFormatter().localizedString(for: lastModifiedDate, relativeTo: Date()))")
+                    .font(.caption)
+                    .foregroundStyle(Color.gray)
+            }
             
             HStack {
                 Button {
@@ -59,53 +63,48 @@ struct PlaylistView: View {
                 .background(Color(red: 80/255, green: 90/255, blue: 90/255))
                 .cornerRadius(20)
             }.padding(.top, 10)
-        }
-        
-        Rectangle().frame(width:300, height: 1)
-            .foregroundStyle(.gray)
-            .padding(.top, 5)
-        
-        if (playlist.tracks == nil) {
-            Text("Loading tracks")
-        } else {
-            VStack {
-                ForEach(playlist.tracks!) { track in
-                    //TODO: Implement song view
-                    HStack {
-                        //TODO: implement star for favorites
-                        ArtworkImage(track.artwork!, width: 75)
-                            .frame(width: 75, height: 75)
-                            .cornerRadius(5)
-                            .padding(.trailing, 10)
-                        
-                        Text(track.title)
-                        Spacer()
-                        Image(systemName: "chevron.right")
+            
+            Rectangle().frame(width:300, height: 1)
+                .foregroundStyle(.gray)
+                .padding(.top, 5)
+            
+            if let tracks = playlist.tracks {
+                VStack {
+                    ForEach(tracks) { track in
+                        //TODO: Implement song view
+                        HStack {
+                            //TODO: implement star for favorites
+                            if let trackArtwork = track.artwork {
+                                ArtworkImage(trackArtwork, width: 75)
+                                    .frame(width: 50, height: 50)
+                                    .cornerRadius(5)
+                                    .padding(.trailing, 10)
+                            }
+                            
+                            
+                            Text(track.title)
+                            Spacer()
+                            Image(systemName: "chevron.right")
+                        }
+                        .padding(.leading)
+                        .padding(.trailing)
+                        .padding(.bottom, 2.5)
+                        .foregroundStyle(.white)
                     }
-                    .padding(.leading)
-                    .padding(.trailing)
-                    .padding(.bottom, 2.5)
-                    .foregroundStyle(.white)
                 }
             }
-            .onAppear() {
-                print("Running onAppear")
-                Task {
-                    print("Running load task")
-                    try await loadPlaylistTracks(self.playlist)
-                }
+            
+            Spacer()
+        }
+        .task(id: playlist.id) {
+            print("Fetching playlist tracks")
+            do {
+                self.playlist = try await playlist.with(.tracks)
+                print("Playlist tracks fetched")
+            } catch {
+                print("Error fetching playlist tracks: \(error)")
             }
         }
-        
-        
-        
-        Spacer()
     }
     
-    @MainActor
-    func loadPlaylistTracks(_ pl: MusicItemCollection<Playlist>.Element) async throws {
-        //Troubleshoot
-        print(await MusicAuthorization.request())
-        self.playlist = try await pl.with([.tracks])
-    }
 }

@@ -19,10 +19,8 @@ struct LibraryPlaylistView: View {
                     .font(.title)
                     .fontWeight(.bold)
                 
-                if (playlists == nil) {
-                    Text("No playlists found")
-                } else {
-                    ForEach(playlists!) { playlist in
+                if let safePlaylists = playlists {
+                    ForEach(safePlaylists) { playlist in
                         NavigationLink(destination: PlaylistView(playlist)) {
                             HStack {
                                 //TODO: implement star for favorites
@@ -41,7 +39,7 @@ struct LibraryPlaylistView: View {
                             .foregroundStyle(.white)
                         }
                         
-                        if playlists!.last != playlist {
+                        if safePlaylists.last != playlist {
                             Rectangle().frame(width: 365, height: 1).foregroundStyle(Color.gray)
                         }
                         
@@ -54,7 +52,11 @@ struct LibraryPlaylistView: View {
         .padding(.leading, 15)
         .onAppear() {
             Task {
-                try await loadLibraryPlaylists()
+                do {
+                    try await loadLibraryPlaylists()
+                } catch {
+                    print("Error loading playlists: \(error)")
+                }
             }
         }
         
@@ -64,10 +66,6 @@ struct LibraryPlaylistView: View {
     func loadLibraryPlaylists() async throws {
         let request = MusicLibraryRequest<Playlist>()
         let response = try await request.response()
-        
-        response.items.forEach { playlist in
-            await playlist.with([.tracks])
-        }
         
         playlists = response.items
     }
