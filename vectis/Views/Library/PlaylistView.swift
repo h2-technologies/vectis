@@ -19,10 +19,10 @@ struct PlaylistView: View {
     var body: some View {
         ScrollView {
             if let artwork = playlist.artwork {
-                ArtworkImage(artwork, width: 150)
-                    .frame(width: 150, height: 150)
-                    .padding(.bottom)
+                ArtworkImage(artwork, width: 225, height: 225)
+                    .cornerRadius(20)
             }
+            
             
             Text(playlist.name)
                 .bold()
@@ -64,13 +64,14 @@ struct PlaylistView: View {
                 .cornerRadius(20)
             }.padding(.top, 10)
             
-            Rectangle().frame(width:300, height: 1)
+            Rectangle().frame(width:350, height: 1)
                 .foregroundStyle(.gray)
                 .padding(.top, 5)
+                .padding(.bottom, 5)
             
             if let tracks = playlist.tracks {
                 VStack {
-                    ForEach(tracks) { track in
+                    ForEach(tracks, id: \.id) { track in
                         //TODO: Implement song view
                         HStack {
                             //TODO: implement star for favorites
@@ -78,21 +79,34 @@ struct PlaylistView: View {
                                 ArtworkImage(trackArtwork, width: 75)
                                     .frame(width: 50, height: 50)
                                     .cornerRadius(5)
-                                    .padding(.trailing, 10)
+                                    .padding(.trailing, 5)
                             }
                             
                             
-                            Text(track.title)
+                            VStack(alignment: .leading) {
+                                Text(track.title)
+                                    
+                                Text(track.artistName)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.gray)
+                            }
+                            
                             Spacer()
-                            Image(systemName: "chevron.right")
                         }
                         .padding(.leading)
                         .padding(.trailing)
                         .padding(.bottom, 2.5)
                         .foregroundStyle(.white)
+                        
+                        Rectangle().frame(width: 350, height: 1)
+                            .foregroundStyle(Color(red: 69/255, green: 74/255, blue: 82/255))
                     }
                 }
             }
+            
+            //TODO: Add an "Add Songs" button
+            
+            //TODO: Display song duration
             
             Spacer()
         }
