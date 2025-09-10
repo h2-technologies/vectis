@@ -12,6 +12,8 @@ struct PlaylistView: View {
     
     @State var playlist: MusicItemCollection<Playlist>.Element
     
+    @EnvironmentObject private var appMusicPlayer: AppMusicPlayer
+    
     init(_ playlist: MusicItemCollection<Playlist>.Element) {
         self.playlist = playlist
     }
@@ -35,7 +37,13 @@ struct PlaylistView: View {
             
             HStack {
                 Button {
-                    
+                    Task {
+                        if let tracks = playlist.tracks {
+                            await appMusicPlayer.enqueuePlaylist(playlist: tracks, firstSong: tracks[0])
+                            await appMusicPlayer.play()
+                        }
+                        
+                    }
                 } label: {
                     HStack {
                         Image(systemName: "play.fill")
@@ -45,12 +53,12 @@ struct PlaylistView: View {
                     .foregroundStyle(.pink)
                 }
                 .frame(width: 150, alignment: .center)
-                .background(Color(red: 80/255, green: 90/255, blue: 90/255))
+                .background(Color(red: 40/255, green: 45/255, blue: 45/255))
                 .cornerRadius(20)
                 
                 
                 Button {
-                    
+                    //TODO: Implement shuffle algoritm
                 } label: {
                     HStack {
                         Image(systemName: "shuffle")
@@ -60,7 +68,7 @@ struct PlaylistView: View {
                     .foregroundStyle(.pink)
                 }
                 .frame(width: 150, alignment: .center)
-                .background(Color(red: 80/255, green: 90/255, blue: 90/255))
+                .background(Color(red: 40/255, green: 45/255, blue: 45/255))
                 .cornerRadius(20)
             }.padding(.top, 10)
             
@@ -73,34 +81,50 @@ struct PlaylistView: View {
                 VStack {
                     ForEach(tracks, id: \.id) { track in
                         //TODO: Implement song view
-                        HStack {
-                            //TODO: implement star for favorites
-                            if let trackArtwork = track.artwork {
-                                ArtworkImage(trackArtwork, width: 75)
-                                    .frame(width: 50, height: 50)
-                                    .cornerRadius(5)
-                                    .padding(.trailing, 5)
+                        Button(action: {
+                            Task {
+                                await appMusicPlayer.enqueuePlaylist(playlist: tracks, firstSong: track)
+                                await appMusicPlayer.play()
                             }
+                        }) {
+                                //TODO: implement star for favorites
+                                if let trackArtwork = track.artwork {
+                                    ArtworkImage(trackArtwork, width: 75)
+                                        .frame(width: 50, height: 50)
+                                        .cornerRadius(5)
+                                        .padding(.trailing, 5)
+                                }
+                                
+                                
+                                VStack(alignment: .leading) {
+                                    Text(track.title)
+                                        .lineLimit(1)
+                                        
+                                    Text(track.artistName)
+                                        .font(.caption)
+                                        .foregroundStyle(.gray)
+                                }
+                                
+                                Spacer()
+                                
+                                Button(action: {
+                                    print("Menu")
+                                }) {
+                                    Image(systemName: "ellipsis")
+                                }
+                                .padding(.trailing, 5)
                             
                             
-                            VStack(alignment: .leading) {
-                                Text(track.title)
-                                    
-                                Text(track.artistName)
-                                    .font(.subheadline)
-                                    .foregroundStyle(.gray)
-                            }
-                            
-                            Spacer()
                         }
-                        .padding(.leading)
-                        .padding(.trailing)
+                        .padding(.leading, 4)
+                        .padding(.trailing, 4)
                         .padding(.bottom, 2.5)
                         .foregroundStyle(.white)
                         
                         Rectangle().frame(width: 350, height: 1)
                             .foregroundStyle(Color(red: 69/255, green: 74/255, blue: 82/255))
                     }
+                    
                 }
             }
             
@@ -111,14 +135,14 @@ struct PlaylistView: View {
             Spacer()
         }
         .task(id: playlist.id) {
-            print("Fetching playlist tracks")
             do {
                 self.playlist = try await playlist.with(.tracks)
-                print("Playlist tracks fetched")
             } catch {
                 print("Error fetching playlist tracks: \(error)")
             }
         }
+        .padding(.leading, 10)
+        .padding(.trailing, 10)
     }
     
 }
