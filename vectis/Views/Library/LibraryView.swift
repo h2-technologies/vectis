@@ -8,7 +8,17 @@
 import SwiftUI
 import MusicKit
 
+enum CombinedItems: Hashable {
+    case album(Album)
+    case playlist(Playlist)
+}
+
 struct LibraryView: View {
+    @State var playlists: [Playlist] = []
+    @State var albums: [Album] = []
+    @State var items: [CombinedItems] = []
+    @State var chunkedItems: [[CombinedItems]] = []
+    
     var body: some View {
         NavigationStack {
             ScrollView {
@@ -37,25 +47,70 @@ struct LibraryView: View {
                         .fontWeight(.bold)
                     
                     VStack {
-                        HStack {
-                            LibraryAlbumButton("Album 1", "Arist 1")
-                            Spacer()
-                            LibraryAlbumButton("Album 2", "Arist 1")
+                        ForEach(chunkedItems, id: \.self) { row in
+                            ItemRow(row)
+                           
                         }
-                        .padding(.trailing, 15)
-                        
-                        HStack {
-                            LibraryAlbumButton("Album 3", "Arist 2")
-                            Spacer()
-                            LibraryAlbumButton("Album 4", "Arist 2")
-                        }
-                        .padding(.trailing, 15)
                         
                     }
                 }
                 .padding(.leading, 15)
             }
+        }.onAppear() {
+            Task {
+                await loadLibrary()
+            }
+            
+            
+            
+            print(chunkedItems)
+            
         }
+    }
+    
+    func ItemRow(_ row: [ CombinedItems ]) -> some View {
+        return HStack {
+            ForEach (row, id: \.self) {item in
+                switch item {
+                case .album(let album):
+                    LibraryAlbumButton(album.title, album.artistName)
+                    
+                case .playlist(let playlist) :
+                    LibraryAlbumButton("", "")
+                }
+            }
+            .padding(.trailing, 15)
+            
+        }
+    }
+
+    
+    @MainActor
+    func loadLibrary() async {
+        do {
+            let playlistRequest = MusicLibraryRequest<Playlist>()
+            let playlistResponse = try await playlistRequest.response()
+            playlists = playlistResponse.items.compactMap { $0 as Playlist }
+            print(playlists)
+
+            let albumRequest = MusicLibraryRequest<Album>()
+            let albumResponse = try await albumRequest.response()
+            albums = albumResponse.items.compactMap{ $0 as Album }
+            albums = albums.sorted(by: { $0.libraryAddedDate! > $1.libraryAddedDate! })
+            
+            items = playlists.map { .playlist($0) } + albums.map { .album($0) }
+            
+            //TODO: Sort array by date added to library
+            
+            chunkedItems = chunkArray(array: items, chunkSize: 2)
+            
+            //print(chunkedItems)
+            
+            
+        } catch {
+            print("Error fetching library: \(error)")
+        }
+                
     }
 }
 

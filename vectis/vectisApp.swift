@@ -119,8 +119,7 @@ struct NowPlayingWidget: View {
             
             Button(action: {
                 Task {
-                    //try await appMusicPlayer.skip()
-                    print("skip")
+                    await appMusicPlayer.skipToNext()
                 }
             }) {
                 Image(systemName: "forward.fill")

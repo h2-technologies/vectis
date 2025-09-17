@@ -58,7 +58,13 @@ struct PlaylistView: View {
                 
                 
                 Button {
-                    //TODO: Implement shuffle algoritm
+                    Task {
+                        if let tracks = playlist.tracks {
+                            await appMusicPlayer.enqueuePlaylist(playlist: tracks, firstSong: tracks[0])
+                            appMusicPlayer.shuffle(true)
+                            await appMusicPlayer.play()
+                        }
+                    }
                 } label: {
                     HStack {
                         Image(systemName: "shuffle")

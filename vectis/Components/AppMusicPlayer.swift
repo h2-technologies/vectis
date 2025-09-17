@@ -74,6 +74,7 @@ public class AppMusicPlayer: ObservableObject {
     //Clears the queue and queues a playlist
     @MainActor
     func enqueuePlaylist(playlist: MusicItemCollection<Track>, firstSong: MusicItemCollection<Track>.Element) async {
+        shuffle(false)
         guard let startIndex = playlist.firstIndex(where: { $0.id == firstSong.id }) else {
             return
         }
@@ -82,6 +83,15 @@ public class AppMusicPlayer: ObservableObject {
         
         player.queue = ApplicationMusicPlayer.Queue(for: newQueue)
         
+    }
+    
+    @MainActor
+    func shuffle(_ mode: Bool) {
+        if mode {
+            player.state.shuffleMode = .songs
+        } else {
+            player.state.shuffleMode = .off
+        }
     }
     
     @MainActor
