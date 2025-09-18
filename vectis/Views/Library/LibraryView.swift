@@ -11,6 +11,15 @@ import MusicKit
 enum CombinedItems: Hashable {
     case album(Album)
     case playlist(Playlist)
+    
+    var libraryAddedDate: Date? {
+        switch self {
+        case .album (let album):
+            return album.libraryAddedDate
+        case .playlist (let playlist):
+            return playlist.libraryAddedDate
+        }
+    }
 }
 
 struct LibraryView: View {
@@ -47,9 +56,8 @@ struct LibraryView: View {
                         .fontWeight(.bold)
                     
                     VStack {
-                        ForEach(chunkedItems, id: \.self) { row in
+                        ForEach(Array(chunkedItems.enumerated()), id: \.offset) { index, row in
                             ItemRow(row)
-                           
                         }
                         
                     }
@@ -59,11 +67,8 @@ struct LibraryView: View {
         }.onAppear() {
             Task {
                 await loadLibrary()
+                print(chunkedItems)
             }
-            
-            
-            
-            print(chunkedItems)
             
         }
     }
@@ -71,13 +76,7 @@ struct LibraryView: View {
     func ItemRow(_ row: [ CombinedItems ]) -> some View {
         return HStack {
             ForEach (row, id: \.self) {item in
-                switch item {
-                case .album(let album):
-                    LibraryAlbumButton(album.title, album.artistName)
-                    
-                case .playlist(let playlist) :
-                    LibraryAlbumButton("", "")
-                }
+                LibraryItemView(item)
             }
             .padding(.trailing, 15)
             
@@ -91,16 +90,18 @@ struct LibraryView: View {
             let playlistRequest = MusicLibraryRequest<Playlist>()
             let playlistResponse = try await playlistRequest.response()
             playlists = playlistResponse.items.compactMap { $0 as Playlist }
-            print(playlists)
+            playlists = playlists.sorted(by: { ($0.libraryAddedDate ?? Date.distantPast) > ($1.libraryAddedDate ?? Date.distantPast) })
 
             let albumRequest = MusicLibraryRequest<Album>()
             let albumResponse = try await albumRequest.response()
             albums = albumResponse.items.compactMap{ $0 as Album }
-            albums = albums.sorted(by: { $0.libraryAddedDate! > $1.libraryAddedDate! })
+            albums = albums.sorted(by: { ($0.libraryAddedDate ?? Date.distantPast) > ($1.libraryAddedDate ?? Date.distantPast) })
             
             items = playlists.map { .playlist($0) } + albums.map { .album($0) }
             
             //TODO: Sort array by date added to library
+            
+            items = items.sorted(by: { ($0.libraryAddedDate ?? Date.distantPast) > ($1.libraryAddedDate ?? Date.distantPast) })
             
             chunkedItems = chunkArray(array: items, chunkSize: 2)
             
@@ -114,6 +115,21 @@ struct LibraryView: View {
     }
 }
 
-#Preview {
-    LibraryView()
+struct LibraryItemView: View {
+    let item: CombinedItems
+    
+    init(_ item: CombinedItems) {
+        self.item = item
+    }
+    
+    var body: some View {
+        switch item {
+        case .album(let album):
+            LibraryAlbumButton(album.title, album.artistName, album.artwork!)
+        case .playlist(let playlist):
+            NavigationLink(destination: PlaylistView(playlist)) {
+                LibraryPlaylistButton(playlist.name, playlist.artwork!)
+            }
+        }
+    }
 }
