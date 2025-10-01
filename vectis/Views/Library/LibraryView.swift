@@ -38,14 +38,17 @@ struct LibraryView: View {
                         .padding(.bottom, 15)
                     
                     VStack {
-                        NavigationLink (destination: LibraryPlaylistView()) {
+                        NavigationLink (destination: LibraryPlaylistView(playlists)) {
                             LibraryCategoryButton("Playlists", buttonImage: "music.note.list")
                         }
                         .tint(.white)
                         
                         LibraryCategoryButton("Artists", buttonImage: "music.microphone")
                         
-                        LibraryCategoryButton("Albums", buttonImage: "play.square.stack")
+                        NavigationLink (destination: LibraryAlbumView(albums)) {
+                            LibraryCategoryButton("Albums", buttonImage: "play.square.stack")
+                        }
+                        .tint(.white)
                         
                         LibraryCategoryButton("Songs", buttonImage: "music.note")
                     }
@@ -67,7 +70,6 @@ struct LibraryView: View {
         }.onAppear() {
             Task {
                 await loadLibrary()
-                print(chunkedItems)
             }
             
         }
@@ -99,13 +101,9 @@ struct LibraryView: View {
             
             items = playlists.map { .playlist($0) } + albums.map { .album($0) }
             
-            //TODO: Sort array by date added to library
-            
             items = items.sorted(by: { ($0.libraryAddedDate ?? Date.distantPast) > ($1.libraryAddedDate ?? Date.distantPast) })
             
             chunkedItems = chunkArray(array: items, chunkSize: 2)
-            
-            //print(chunkedItems)
             
             
         } catch {
