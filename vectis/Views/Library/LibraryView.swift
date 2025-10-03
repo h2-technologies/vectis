@@ -123,7 +123,9 @@ struct LibraryItemView: View {
     var body: some View {
         switch item {
         case .album(let album):
-            LibraryAlbumButton(album.title, album.artistName, album.artwork!)
+            NavigationLink(destination: AlbumView(album)) {
+                LibraryAlbumButton(album.title, album.artistName, album.artwork!)
+            }
         case .playlist(let playlist):
             NavigationLink(destination: PlaylistView(playlist)) {
                 LibraryPlaylistButton(playlist.name, playlist.artwork!)

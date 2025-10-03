@@ -16,7 +16,6 @@ struct AlbumView: View {
     
     init(_ album: Album) {
         self.album = album
-        print(album.genreNames)
     }
     
     var body: some View {
@@ -97,6 +96,52 @@ struct AlbumView: View {
                 .padding(.top, 5)
                 .padding(.bottom, 5)
             
+            if let tracks = album.tracks {
+                VStack {
+                    ForEach(Array(tracks.enumerated()), id: \.element.id) { index, track in
+                        Button(action: {
+                            Task {
+                                await appMusicPlayer.enqueuePlaylist(playlist: tracks, firstSong: track)
+                            }
+                        }) {
+                                Text("\(index + 1)") // Track number
+                                    .padding(.trailing, 5)
+                                    .foregroundStyle(.gray)
+                                
+                                Text(track.title)
+                                    .lineLimit(1)
+                                
+                                Spacer()
+                                
+                                Button(action: {
+                                    print("Menu")
+                                }) {
+                                    Image(systemName: "ellipsis")
+                                }
+                                .padding(.trailing, 5)
+                            
+                        }
+                        .frame(height: 25)
+                        .padding(.leading, 4)
+                        .padding(.trailing, 4)
+                        .padding(.bottom, 2.5)
+                        .foregroundStyle(.white)
+                        
+                        Rectangle().frame(width: 350, height: 1)
+                            .foregroundStyle(Color(red: 69/255, green: 74/255, blue: 82/255))
+                    }
+                }
+                
+                Spacer()
+            }
+            
+        }
+        .task(id: album.id) {
+            do {
+                self.album = try await album.with(.tracks)
+            } catch {
+                print("Error fetching album tracks: \(error)")
+            }
         }
         .padding(.leading, 10)
         .padding(.trailing, 10)
