@@ -94,7 +94,7 @@ struct AlbumView: View {
             Rectangle().frame(width:350, height: 1)
                 .foregroundStyle(.gray)
                 .padding(.top, 5)
-                .padding(.bottom, 5)
+                .padding(.bottom, 10)
             
             if let tracks = album.tracks {
                 VStack {
@@ -102,6 +102,7 @@ struct AlbumView: View {
                         Button(action: {
                             Task {
                                 await appMusicPlayer.enqueuePlaylist(playlist: tracks, firstSong: track)
+                                await appMusicPlayer.play()
                             }
                         }) {
                                 Text("\(index + 1)") // Track number
@@ -121,7 +122,7 @@ struct AlbumView: View {
                                 .padding(.trailing, 5)
                             
                         }
-                        .frame(height: 25)
+                        .frame(height: 30)
                         .padding(.leading, 4)
                         .padding(.trailing, 4)
                         .padding(.bottom, 2.5)
