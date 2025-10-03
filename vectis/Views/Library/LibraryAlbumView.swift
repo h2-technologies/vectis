@@ -60,6 +60,7 @@ struct LibraryAlbumView: View {
                                             .font(.caption)
                                             .fontWeight(.semibold)
                                             .lineLimit(1)
+                                            .foregroundStyle(.white)
                                         Text(album.artistName)
                                             .font(.caption2)
                                             .foregroundColor(.secondary)

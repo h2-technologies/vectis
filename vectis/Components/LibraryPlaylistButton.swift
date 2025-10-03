@@ -27,6 +27,7 @@ struct LibraryPlaylistButton: View {
                 .font(.subheadline)
                 .padding(.leading, 2.5)
                 .lineLimit(1)
+                .foregroundStyle(.white)
             
             Text("")
                 .font(.caption)
