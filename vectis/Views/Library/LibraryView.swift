@@ -41,18 +41,19 @@ struct LibraryView: View {
                         NavigationLink (destination: LibraryPlaylistView(playlists)) {
                             LibraryCategoryButton("Playlists", buttonImage: "music.note.list")
                         }
-                        .tint(.white)
                         
-                        LibraryCategoryButton("Artists", buttonImage: "music.microphone")
+                        NavigationLink (destination: LibraryArtistView()) {
+                            LibraryCategoryButton("Artists", buttonImage: "music.microphone")
+                        }
                         
                         NavigationLink (destination: LibraryAlbumView(albums)) {
                             LibraryCategoryButton("Albums", buttonImage: "play.square.stack")
                         }
-                        .tint(.white)
                         
                         LibraryCategoryButton("Songs", buttonImage: "music.note")
                     }
                     .padding(.leading, -15)
+                    .tint(.white)
                     
                     Text("Recently Added")
                         .font(.title2)
