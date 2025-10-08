@@ -39,8 +39,8 @@ public class AppMusicPlayer: ObservableObject {
             currentSong = song as Song
             
         }
-        queue = player.queue.entries.compactMap { $0.item as? Song }
-        status = player.state.playbackStatus
+        queue = self.player.queue.entries.compactMap { $0.item as? Song }
+        status = self.player.state.playbackStatus
     }
     
     @MainActor
@@ -71,7 +71,7 @@ public class AppMusicPlayer: ObservableObject {
         }
     }
     
-    //Clears the queue and queues a playlist
+    //Replaces the queue with a new queue of the playlist
     @MainActor
     func enqueuePlaylist(playlist: MusicItemCollection<Track>, firstSong: MusicItemCollection<Track>.Element) async {
         shuffle(false)
@@ -83,6 +83,31 @@ public class AppMusicPlayer: ObservableObject {
         
         player.queue = ApplicationMusicPlayer.Queue(for: newQueue)
         
+    }
+    
+    //Clears the queue and queues an artist
+    @MainActor
+    func enqueueArtist(_ artist: Artist) async {
+        shuffle(false) // disable shuffle
+        player.queue = ApplicationMusicPlayer.Queue() // clear the queue
+        if let albums = artist.albums {
+            for album in albums {
+                do {
+                    let albumWithTracks = try await album.with(.tracks)
+                    if let tracks = albumWithTracks.tracks {
+                        if album == albums.first {
+                            await self.enqueuePlaylist(playlist: tracks, firstSong: tracks[0])
+                        } else {
+                            await self.enqueue(songs: tracks)
+                        }
+                    }
+                } catch {
+                    print("Error fetching album tracks: \(error)" )
+                }
+                
+                
+            }
+        }
     }
     
     @MainActor
