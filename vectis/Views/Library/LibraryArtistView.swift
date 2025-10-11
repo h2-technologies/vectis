@@ -7,6 +7,35 @@
 import SwiftUI
 import MusicKit
 
+struct ArtistRow: View {
+    let artist: Artist
+    var body: some View {
+        HStack {
+            if let artwork = artist.artwork {
+                ArtworkImage(artwork, width: 50, height: 50)
+                    .frame(width: 50, height: 50)
+                    .cornerRadius(30)
+                    .padding(.trailing, 10)
+            }
+            Text(artist.name)
+                .lineLimit(2)
+                .font(.body)
+                .multilineTextAlignment(.leading)
+            Spacer()
+            Image(systemName: "chevron.right")
+        }
+        .padding(.leading)
+        .padding(.trailing)
+        .padding(.bottom, 2.5)
+        .foregroundStyle(.white)
+    }
+}
+
+struct ArtistSection: Identifiable {
+    let id: String
+    let artists: [Artist]
+}
+
 struct LibraryArtistView: View {
     
     @State var artists: [Artist] = []
@@ -28,50 +57,29 @@ struct LibraryArtistView: View {
     }
     
     var body: some View {
+        let groupedSections: [ArtistSection] = groupedArists.map { ArtistSection(id: $0.key, artists: $0.value) }
         ScrollView {
             VStack(alignment: .leading) {
                 Text("Artists")
                     .font(.title)
                     .fontWeight(.bold)
-                ForEach(groupedArists, id: \.key) { section in
+                ForEach(groupedSections) { section in
                     VStack(alignment: .leading, spacing: 8) {
-                        Text(section.key)
+                        Text(section.id)
                             .font(.headline)
                             .padding(.top, 12)
-                        
-                        ForEach(section.value, id: \.id) { artist in
-                            NavigationLink(destination: ArtistView(artist)) {
-                                HStack {
-                                    if let artwork = artist.artwork {
-                                        ArtworkImage(artwork, width: 50, height: 50)
-                                            .frame(width: 50, height: 50)
-                                            .cornerRadius(30)
-                                            .padding(.trailing, 10)
-                                    }
-                                    
-                                    Text(artist.name)
-                                        .lineLimit(2)
-                                        .font(.body)
-                                        .multilineTextAlignment(.leading)
-                                    
-                                    Spacer()
-                                    Image(systemName: "chevron.right")
-                                }
-                                .padding(.leading)
-                                .padding(.trailing)
-                                .padding(.bottom, 2.5)
-                                .foregroundStyle(.white)
-                                
+                        ForEach(section.artists.indices, id: \.self) { idx in
+                            let artist = section.artists[idx]
+                            NavigationLink(destination: ArtistView(artist: artist)) {
+                                ArtistRow(artist: artist)
                             }
-                            
-                            if section.value.last != artist {
+                            if idx < section.artists.count - 1 {
                                 Rectangle().frame(width: 365, height: 1).foregroundStyle(Color.gray)
                             }
                         }
                     }
                 }
             }
-            
         }
         .onAppear() {
             Task {
@@ -98,4 +106,3 @@ struct LibraryArtistView: View {
         
     }
 }
-

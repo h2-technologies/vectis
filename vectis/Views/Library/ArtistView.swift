@@ -8,17 +8,9 @@ import MusicKit
 import SwiftUI
 
 struct ArtistView: View {
-    
-    @State var artist: Artist
-    
+    let artist: Artist
+    @State private var albums: [Album] = []
     @EnvironmentObject private var appMusicPlayer: AppMusicPlayer
-    
-    init(_ artist: Artist) {
-        
-        self.artist = artist
-        
-       
-    }
     
     var body: some View {
         ScrollView {
@@ -31,13 +23,11 @@ struct ArtistView: View {
             //Reference issue #18
             Text(artist.name)
                 .bold()
-                .font(.headline)
-            
+                .font(.largeTitle)
             HStack {
                 Button {
                     Task {
                         await appMusicPlayer.enqueueArtist(artist)
-                            
                         await appMusicPlayer.play()
                     }
                 } label: {
@@ -49,22 +39,42 @@ struct ArtistView: View {
                     .foregroundStyle(.pink)
                 }
             }
-            
             let columns = [GridItem(.flexible()), GridItem(.flexible())]
             LazyVGrid(columns: columns, spacing: 16) {
-                if let albums = artist.albums as? [Album] {
-                    ForEach(albums, id: \.id) { album in
-                        NavigationLink(destination: AlbumView(album)) {
-                            Text(album.title)
+                ForEach(albums.sorted(by: { $0.libraryAddedDate ?? Date() > $1.libraryAddedDate ?? Date()}), id: \.id) { album in
+                    NavigationLink(destination: AlbumView(album)) {
+                        VStack {
+                            if let artwork = album.artwork {
+                                ArtworkImage(artwork, width: 175, height: 175)
+                                    .cornerRadius(12)
+                            } else {
+                                Rectangle()
+                                    .fill(Color.gray.opacity(0.3))
+                                    .frame(width: 200, height: 200)
+                                    .cornerRadius(12)
+                            }
+                            VStack(alignment: .leading) {
+                                Text(album.title)
+                                    .font(.subheadline)
+                                    .foregroundColor(.white)
+                                    .lineLimit(1)
+                                Text(album.releaseDate?.formatted(.dateTime.year()) ?? "Unknown Year")
+                                    .font(.subheadline)
+                                    .foregroundColor(.secondary)
+                                    .lineLimit(1)
+                            }
                         }
+                        
                     }
                 }
             }
-        
-        }.task(id: artist.id) {
+        }
+        .task(id: artist.id) {
             do {
-                self.artist = try await artist.with(.albums)
-                self.artist.albums = self.artist.albums?.sorted(by: { $0.title < $1.title })
+                let loaded = try await artist.with(.albums)
+                if let loadedAlbums = loaded.albums {
+                    self.albums = loadedAlbums.sorted { $0.title < $1.title }
+                }
             } catch {
                 print("Error loading artist albums: \(error)")
             }
