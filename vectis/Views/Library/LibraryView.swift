@@ -50,7 +50,10 @@ struct LibraryView: View {
                             LibraryCategoryButton("Albums", buttonImage: "play.square.stack")
                         }
                         
-                        LibraryCategoryButton("Songs", buttonImage: "music.note")
+                        NavigationLink(destination: LibrarySongView()) {
+                            LibraryCategoryButton("Songs", buttonImage: "music.note")
+                        }
+                        
                     }
                     .padding(.leading, -15)
                     .tint(.white)

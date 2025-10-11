@@ -86,7 +86,6 @@ struct PlaylistView: View {
             if let tracks = playlist.tracks {
                 VStack {
                     ForEach(tracks, id: \.id) { track in
-                        //TODO: Implement song view
                         Button(action: {
                             Task {
                                 await appMusicPlayer.enqueuePlaylist(playlist: tracks, firstSong: track)
@@ -94,6 +93,7 @@ struct PlaylistView: View {
                             }
                         }) {
                                 //TODO: implement star for favorites
+                                //reference issue #20
                                 if let trackArtwork = track.artwork {
                                     ArtworkImage(trackArtwork, width: 75)
                                         .frame(width: 50, height: 50)
@@ -114,6 +114,8 @@ struct PlaylistView: View {
                                 Spacer()
                                 
                                 Button(action: {
+                                    //TODO: Add action menu
+                                    //Ref issue #21
                                     print("Menu")
                                 }) {
                                     Image(systemName: "ellipsis")
