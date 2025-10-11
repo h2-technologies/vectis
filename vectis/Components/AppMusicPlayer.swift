@@ -37,7 +37,6 @@ public class AppMusicPlayer: ObservableObject {
     private func updatePlayerState() {
         if case let .song(song) = player.queue.currentEntry?.item {
             currentSong = song as Song
-            
         }
         queue = self.player.queue.entries.compactMap { $0.item as? Song }
         status = self.player.state.playbackStatus
