@@ -47,7 +47,7 @@ struct MainView: View {
                     LibraryView()
                 }
                 Tab("Search", systemImage: "magnifyingglass") {
-                    
+                    SearchView()
                 }
             }
             
