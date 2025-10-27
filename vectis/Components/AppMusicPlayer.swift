@@ -72,7 +72,7 @@ public class AppMusicPlayer: ObservableObject {
     
     //Replaces the queue with a new queue of the playlist
     @MainActor
-    func enqueuePlaylist(playlist: MusicItemCollection<Track>, firstSong: MusicItemCollection<Track>.Element) async {
+    func enqueuePlaylist<T: PlayableMusicItem>(playlist: MusicItemCollection<T>, firstSong: T) async {
         shuffle(false)
         guard let startIndex = playlist.firstIndex(where: { $0.id == firstSong.id }) else {
             return
