@@ -52,10 +52,21 @@ jobs:
         path: vectis-macos.zip
         retention-days: 30
     
+    - name: Extract version from Xcode project
+      id: version
+      run: |
+        VERSION=$(xcodebuild -project vectis.xcodeproj -showBuildSettings | grep MARKETING_VERSION | head -n 1 | awk '{print $3}')
+        BUILD=$(xcodebuild -project vectis.xcodeproj -showBuildSettings | grep CURRENT_PROJECT_VERSION | head -n 1 | awk '{print $3}')
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "build=$BUILD" >> $GITHUB_OUTPUT
+        echo "Extracted version: $VERSION (build $BUILD)"
+    
     - name: Get app info
       run: |
         echo "### Build Information" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
+        echo "- **Version:** ${{ steps.version.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Build:** ${{ steps.version.outputs.build }}" >> $GITHUB_STEP_SUMMARY
         echo "- **Build Date:** $(date)" >> $GITHUB_STEP_SUMMARY
         echo "- **Xcode Version:** $(xcodebuild -version | head -n 1)" >> $GITHUB_STEP_SUMMARY
         echo "- **Artifact Name:** vectis-macos-app" >> $GITHUB_STEP_SUMMARY
@@ -65,7 +76,7 @@ jobs:
     - name: Generate release tag
       id: tag
       run: |
-        TAG="v$(date +'%Y.%m.%d')-build.${{ github.run_number }}"
+        TAG="v${{ steps.version.outputs.version }}"
         echo "tag=$TAG" >> $GITHUB_OUTPUT
         echo "Generated tag: $TAG"
     
@@ -74,10 +85,12 @@ jobs:
       if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
       with:
         tag_name: ${{ steps.tag.outputs.tag }}
-        name: Vectis ${{ steps.tag.outputs.tag }}
+        name: Vectis v${{ steps.version.outputs.version }}
         body: |
           ## Vectis macOS Build
           
+          **Version:** ${{ steps.version.outputs.version }}
+          **Build:** ${{ steps.version.outputs.build }}
           **Build Date:** ${{ github.event.head_commit.timestamp }}
           **Commit:** ${{ github.sha }}
           **Branch:** ${{ github.ref_name }}
