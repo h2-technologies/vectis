@@ -16,6 +16,8 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
     
+    - name: Select Xcode version
+      run: sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer
     
     - name: Show Xcode version
       run: xcodebuild -version
@@ -60,3 +62,37 @@ jobs:
         echo "- **Artifact Name:** vectis-macos-app" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "✅ App successfully built and packaged!" >> $GITHUB_STEP_SUMMARY
+    
+    - name: Generate release tag
+      id: tag
+      run: |
+        TAG="v$(date +'%Y.%m.%d')-build.${{ github.run_number }}"
+        echo "tag=$TAG" >> $GITHUB_OUTPUT
+        echo "Generated tag: $TAG"
+    
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+      with:
+        tag_name: ${{ steps.tag.outputs.tag }}
+        name: Vectis ${{ steps.tag.outputs.tag }}
+        body: |
+          ## Vectis macOS Build
+          
+          **Build Date:** ${{ github.event.head_commit.timestamp }}
+          **Commit:** ${{ github.sha }}
+          **Branch:** ${{ github.ref_name }}
+          
+          ### Changes
+          ${{ github.event.head_commit.message }}
+          
+          ### Download
+          Download `vectis-macos.zip`, extract it, and run `vectis.app`
+          
+          ---
+          Built automatically by GitHub Actions
+        files: vectis-macos.zip
+        draft: false
+        prerelease: ${{ github.ref != 'refs/heads/main' }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

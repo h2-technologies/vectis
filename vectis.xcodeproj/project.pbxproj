@@ -6,8 +6,13 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		AF5D233E2EB5128300554FF4 /* build.yml in Resources */ = {isa = PBXBuildFile; fileRef = AF5D233B2EB5128300554FF4 /* build.yml */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		AF0C4C452E162D930010133E /* vectis.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = vectis.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		AF5D233B2EB5128300554FF4 /* build.yml */ = {isa = PBXFileReference; lastKnownFileType = text.yaml; path = build.yml; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -56,6 +61,7 @@
 		AF0C4C3C2E162D930010133E = {
 			isa = PBXGroup;
 			children = (
+				AF5D233D2EB5128300554FF4 /* .github */,
 				AF0C4C472E162D930010133E /* vectis */,
 				AF0C4C462E162D930010133E /* Products */,
 			);
@@ -67,6 +73,22 @@
 				AF0C4C452E162D930010133E /* vectis.app */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		AF5D233C2EB5128300554FF4 /* workflows */ = {
+			isa = PBXGroup;
+			children = (
+				AF5D233B2EB5128300554FF4 /* build.yml */,
+			);
+			path = workflows;
+			sourceTree = "<group>";
+		};
+		AF5D233D2EB5128300554FF4 /* .github */ = {
+			isa = PBXGroup;
+			children = (
+				AF5D233C2EB5128300554FF4 /* workflows */,
+			);
+			path = .github;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -133,6 +155,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AF5D233E2EB5128300554FF4 /* build.yml in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
