@@ -8,17 +8,21 @@
 import Foundation
 import MusicKit
 import Combine
+import AVFoundation
 
 public class AppMusicPlayer: ObservableObject {
     private var player = ApplicationMusicPlayer.shared
     
     @Published public var currentSong: Song? = nil
-    @Published public var status: MusicPlayer.PlaybackStatus?
+    @Published public var status: ApplicationMusicPlayer.PlaybackStatus?
     @Published public var queue: [Song] = []
     
     private var cancellables = Set<AnyCancellable>()
     
     init() {
+        // Configure audio session for background playback
+        configureAudioSession()
+        
         player.state.objectWillChange.sink { [weak self] in
             Task { @MainActor in
                 self?.updatePlayerState()
@@ -30,8 +34,16 @@ public class AppMusicPlayer: ObservableObject {
                 self?.updatePlayerState()
             }
         }.store(in: &cancellables)
-        
-        
+    }
+    
+    private func configureAudioSession() {
+        do {
+            let audioSession = AVAudioSession.sharedInstance()
+            try audioSession.setCategory(.playback, mode: .default, options: [])
+            try audioSession.setActive(true)
+        } catch {
+            print("Failed to configure audio session: \(error.localizedDescription)")
+        }
     }
     
     private func updatePlayerState() {
