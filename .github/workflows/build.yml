@@ -1,0 +1,64 @@
+name: Build and Package Vectis
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build Vectis App
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    
+    - name: Select Xcode version
+      run: sudo xcode-select -s /Applications/Xcode_15.4.app/Contents/Developer
+    
+    - name: Show Xcode version
+      run: xcodebuild -version
+    
+    - name: Build app
+      run: |
+        xcodebuild clean build \
+          -project vectis.xcodeproj \
+          -scheme vectis \
+          -configuration Release \
+          -derivedDataPath ./build \
+          CODE_SIGN_IDENTITY="" \
+          CODE_SIGNING_REQUIRED=NO \
+          CODE_SIGNING_ALLOWED=NO
+    
+    - name: Locate built app
+      run: |
+        echo "Searching for vectis.app..."
+        find ./build -name "vectis.app" -type d
+        APP_PATH=$(find ./build -name "vectis.app" -type d | head -n 1)
+        echo "APP_PATH=$APP_PATH" >> $GITHUB_ENV
+    
+    - name: Create archive
+      run: |
+        cd $(dirname "$APP_PATH")
+        zip -r vectis-macos.zip vectis.app
+        mv vectis-macos.zip $GITHUB_WORKSPACE/
+    
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: vectis-macos-app
+        path: vectis-macos.zip
+        retention-days: 30
+    
+    - name: Get app info
+      run: |
+        echo "### Build Information" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "- **Build Date:** $(date)" >> $GITHUB_STEP_SUMMARY
+        echo "- **Xcode Version:** $(xcodebuild -version | head -n 1)" >> $GITHUB_STEP_SUMMARY
+        echo "- **Artifact Name:** vectis-macos-app" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "✅ App successfully built and packaged!" >> $GITHUB_STEP_SUMMARY

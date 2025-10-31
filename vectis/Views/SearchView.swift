@@ -19,6 +19,7 @@ struct SearchView: View {
     @State private var searchTask: Task<Void, Never>?
     @State private var songsLoaded: Bool = false
     @State private var searchMode: SearchMode = .library
+    @FocusState private var isSearchFieldFocused: Bool
     
     enum SearchMode {
         case library
@@ -40,9 +41,15 @@ struct SearchView: View {
                     .foregroundColor(.gray)
                 TextField("Search songs, artists, albums...", text: $searchText)
                     .textFieldStyle(PlainTextFieldStyle())
+                    .focused($isSearchFieldFocused)
                     .onChange(of: searchText) {
                         performSearch(query: searchText)
                     }
+                    .submitLabel(.search)
+                    .onSubmit {
+                        isSearchFieldFocused = false
+                    }
+                    .autocorrectionDisabled()
                 
                 if !searchText.isEmpty {
                     Button(action: {
@@ -59,6 +66,7 @@ struct SearchView: View {
             .cornerRadius(10)
             .padding(.horizontal)
             .padding(.vertical, 10)
+            .animation(nil, value: searchText)
             
             // Search Mode Toggle
             Picker("Search Mode", selection: $searchMode) {
@@ -76,126 +84,12 @@ struct SearchView: View {
             }
             
             // Results
-            if isLoading {
-                Spacer()
-                ProgressView()
-                    .progressViewStyle(CircularProgressViewStyle())
-                    .scaleEffect(1.5)
-                    .frame(maxWidth: .infinity)
-                Spacer()
-            } else if searchText.isEmpty {
-                // Empty state
-                Spacer()
-                VStack(spacing: 10) {
-                    Image(systemName: "music.note.list")
-                        .font(.system(size: 60))
-                        .foregroundColor(.gray)
-                    Text("Search your library")
-                        .font(.headline)
-                        .foregroundColor(.gray)
-                    Text("Find songs, artists, and albums")
-                        .font(.caption)
-                        .foregroundColor(.gray)
-                }
-                .frame(maxWidth: .infinity)
-                Spacer()
-            } else if filteredSongs.isEmpty {
-                // No results
-                Spacer()
-                VStack(spacing: 10) {
-                    Image(systemName: "magnifyingglass")
-                        .font(.system(size: 60))
-                        .foregroundColor(.gray)
-                    Text("No results found")
-                        .font(.headline)
-                        .foregroundColor(.gray)
-                    Text("Try a different search term")
-                        .font(.caption)
-                        .foregroundColor(.gray)
-                }
-                .frame(maxWidth: .infinity)
-                Spacer()
-            } else {
-                // Results list
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 0) {
-                        Text("\(filteredSongs.count) song\(filteredSongs.count == 1 ? "" : "s")")
-                            .font(.caption)
-                            .foregroundColor(.gray)
-                            .padding(.horizontal)
-                            .padding(.bottom, 10)
-                        
-                        ForEach(filteredSongs, id: \.id) { song in
-                            Button(action: {
-                                Task {
-                                    let musicCollection = MusicItemCollection(filteredSongs)
-                                    await appMusicPlayer.enqueuePlaylist(playlist: musicCollection, firstSong: song)
-                                    await appMusicPlayer.play()
-                                }
-                            }) {
-                                HStack(spacing: 12) {
-                                    // Album Artwork
-                                    if let artwork = song.artwork {
-                                        ArtworkImage(artwork, width: 50, height: 50)
-                                            .frame(width: 50, height: 50)
-                                            .cornerRadius(5)
-                                    } else {
-                                        Rectangle()
-                                            .fill(Color.gray.opacity(0.3))
-                                            .frame(width: 50, height: 50)
-                                            .cornerRadius(5)
-                                            .overlay(
-                                                Image(systemName: "music.note")
-                                                    .foregroundColor(.gray)
-                                            )
-                                    }
-                                    
-                                    // Song Info
-                                    VStack(alignment: .leading, spacing: 4) {
-                                        Text(song.title)
-                                            .lineLimit(1)
-                                            .foregroundColor(.white)
-                                        Text(song.artistName)
-                                            .font(.caption)
-                                            .foregroundColor(.gray)
-                                            .lineLimit(1)
-                                        if let albumTitle = song.albumTitle {
-                                            Text(albumTitle)
-                                                .font(.caption2)
-                                                .foregroundColor(.gray.opacity(0.8))
-                                                .lineLimit(1)
-                                        }
-                                    }
-                                    
-                                    Spacer()
-                                    
-                                    // Menu Button
-                                    Button(action: {
-                                        //TODO: Add action menu
-                                        print("Menu for \(song.title)")
-                                    }) {
-                                        Image(systemName: "ellipsis")
-                                            .foregroundColor(.gray)
-                                    }
-                                    .padding(.trailing, 5)
-                                }
-                                .padding(.horizontal)
-                                .padding(.vertical, 8)
-                            }
-                            .buttonStyle(PlainButtonStyle())
-                            
-                            // Divider
-                            if song.id != filteredSongs.last?.id {
-                                Rectangle()
-                                    .frame(height: 1)
-                                    .foregroundStyle(Color(red: 69/255, green: 74/255, blue: 82/255))
-                                    .padding(.leading, 74)
-                                    .padding(.trailing, 16)
-                            }
-                        }
-                    }
-                }
-            }
+            SearchResultsView(
+                isLoading: isLoading,
+                searchText: searchText,
+                filteredSongs: filteredSongs,
+                appMusicPlayer: appMusicPlayer
+            )
         }
     }
     
@@ -302,6 +196,149 @@ struct SearchView: View {
                 self.filteredSongs = results
                 self.isLoading = false
             }
+        }
+    }
+}
+
+// MARK: - Search Results View
+struct SearchResultsView: View {
+    let isLoading: Bool
+    let searchText: String
+    let filteredSongs: [Song]
+    let appMusicPlayer: AppMusicPlayer
+    
+    var body: some View {
+        if isLoading {
+            Spacer()
+            ProgressView()
+                .progressViewStyle(CircularProgressViewStyle())
+                .scaleEffect(1.5)
+                .frame(maxWidth: .infinity)
+            Spacer()
+        } else if searchText.isEmpty {
+            // Empty state
+            Spacer()
+            VStack(spacing: 10) {
+                Image(systemName: "music.note.list")
+                    .font(.system(size: 60))
+                    .foregroundColor(.gray)
+                Text("Search your library")
+                    .font(.headline)
+                    .foregroundColor(.gray)
+                Text("Find songs, artists, and albums")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+            }
+            .frame(maxWidth: .infinity)
+            Spacer()
+        } else if filteredSongs.isEmpty {
+            // No results
+            Spacer()
+            VStack(spacing: 10) {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 60))
+                    .foregroundColor(.gray)
+                Text("No results found")
+                    .font(.headline)
+                    .foregroundColor(.gray)
+                Text("Try a different search term")
+                    .font(.caption)
+                    .foregroundColor(.gray)
+            }
+            .frame(maxWidth: .infinity)
+            Spacer()
+        } else {
+            // Results list
+            ScrollView {
+                LazyVStack(alignment: .leading, spacing: 0) {
+                    Text("\(filteredSongs.count) song\(filteredSongs.count == 1 ? "" : "s")")
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                        .padding(.horizontal)
+                        .padding(.bottom, 10)
+                    
+                    ForEach(filteredSongs, id: \.id) { song in
+                        SearchSongRow(song: song, isLast: song.id == filteredSongs.last?.id, appMusicPlayer: appMusicPlayer, allSongs: filteredSongs)
+                    }
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Search Song Row
+struct SearchSongRow: View {
+    let song: Song
+    let isLast: Bool
+    let appMusicPlayer: AppMusicPlayer
+    let allSongs: [Song]
+    
+    var body: some View {
+        Button(action: {
+            Task {
+                let musicCollection = MusicItemCollection(allSongs)
+                await appMusicPlayer.enqueuePlaylist(playlist: musicCollection, firstSong: song)
+                await appMusicPlayer.play()
+            }
+        }) {
+            HStack(spacing: 12) {
+                // Album Artwork
+                if let artwork = song.artwork {
+                    ArtworkImage(artwork, width: 50, height: 50)
+                        .frame(width: 50, height: 50)
+                        .cornerRadius(5)
+                } else {
+                    Rectangle()
+                        .fill(Color.gray.opacity(0.3))
+                        .frame(width: 50, height: 50)
+                        .cornerRadius(5)
+                        .overlay(
+                            Image(systemName: "music.note")
+                                .foregroundColor(.gray)
+                        )
+                }
+                
+                // Song Info
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(song.title)
+                        .lineLimit(1)
+                        .foregroundColor(.white)
+                    Text(song.artistName)
+                        .font(.caption)
+                        .foregroundColor(.gray)
+                        .lineLimit(1)
+                    if let albumTitle = song.albumTitle {
+                        Text(albumTitle)
+                            .font(.caption2)
+                            .foregroundColor(.gray.opacity(0.8))
+                            .lineLimit(1)
+                    }
+                }
+                
+                Spacer()
+                
+                // Menu Button
+                Button(action: {
+                    //TODO: Add action menu
+                    print("Menu for \(song.title)")
+                }) {
+                    Image(systemName: "ellipsis")
+                        .foregroundColor(.gray)
+                }
+                .padding(.trailing, 5)
+            }
+            .padding(.horizontal)
+            .padding(.vertical, 8)
+        }
+        .buttonStyle(PlainButtonStyle())
+        
+        // Divider
+        if !isLast {
+            Rectangle()
+                .frame(height: 1)
+                .foregroundStyle(Color(red: 69/255, green: 74/255, blue: 82/255))
+                .padding(.leading, 74)
+                .padding(.trailing, 16)
         }
     }
 }
