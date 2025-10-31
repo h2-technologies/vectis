@@ -18,6 +18,12 @@ struct SearchView: View {
     @State private var isLoading: Bool = false
     @State private var searchTask: Task<Void, Never>?
     @State private var songsLoaded: Bool = false
+    @State private var searchMode: SearchMode = .library
+    
+    enum SearchMode {
+        case library
+        case appleMusic
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -53,6 +59,21 @@ struct SearchView: View {
             .cornerRadius(10)
             .padding(.horizontal)
             .padding(.vertical, 10)
+            
+            // Search Mode Toggle
+            Picker("Search Mode", selection: $searchMode) {
+                Text("Library").tag(SearchMode.library)
+                Text("Apple Music").tag(SearchMode.appleMusic)
+            }
+            .pickerStyle(SegmentedPickerStyle())
+            .padding(.horizontal)
+            .padding(.bottom, 10)
+            .onChange(of: searchMode) {
+                // Re-run search when mode changes
+                if !searchText.isEmpty {
+                    performSearch(query: searchText)
+                }
+            }
             
             // Results
             if isLoading {
@@ -202,63 +223,84 @@ struct SearchView: View {
         }
         
         searchTask = Task {
-            // Load songs on first search if not already loaded
-            if !songsLoaded {
-                await loadLibrarySongs()
-                songsLoaded = true
-            }
-            
-            // Capture songs array on main thread before going to background
-            let songsToSearch = self.songs
-            
             // Debounce: wait 300ms before performing search
             try? await Task.sleep(nanoseconds: 300_000_000) // 0.3 seconds
             
             // Check if task was cancelled
             guard !Task.isCancelled else { return }
             
-            // Perform filtering off the main thread
-            let results = await Task.detached {
-                let filtered = songsToSearch.filter { song in
-                    song.title.localizedCaseInsensitiveContains(query) ||
-                    song.artistName.localizedCaseInsensitiveContains(query) ||
-                    song.albumTitle?.localizedCaseInsensitiveContains(query) ?? false
+            await MainActor.run {
+                self.isLoading = true
+            }
+            
+            let results: [Song]
+            
+            if searchMode == .library {
+                // Search user's library
+                if !songsLoaded {
+                    await loadLibrarySongs()
+                    songsLoaded = true
                 }
                 
-                // Sort by relevance: title matches first, then artist, then album
-                return filtered.sorted { song1, song2 in
-                    let song1TitleMatch = song1.title.localizedCaseInsensitiveContains(query)
-                    let song2TitleMatch = song2.title.localizedCaseInsensitiveContains(query)
-                    let song1ArtistMatch = song1.artistName.localizedCaseInsensitiveContains(query)
-                    let song2ArtistMatch = song2.artistName.localizedCaseInsensitiveContains(query)
+                // Capture songs array on main thread before going to background
+                let songsToSearch = self.songs
+                
+                // Perform filtering off the main thread
+                results = await Task.detached {
+                    let filtered = songsToSearch.filter { song in
+                        song.title.localizedCaseInsensitiveContains(query) ||
+                        song.artistName.localizedCaseInsensitiveContains(query) ||
+                        song.albumTitle?.localizedCaseInsensitiveContains(query) ?? false
+                    }
                     
-                    // Both match title - sort alphabetically by title
-                    if song1TitleMatch && song2TitleMatch {
+                    // Sort by relevance: title matches first, then artist, then album
+                    return filtered.sorted { song1, song2 in
+                        let song1TitleMatch = song1.title.localizedCaseInsensitiveContains(query)
+                        let song2TitleMatch = song2.title.localizedCaseInsensitiveContains(query)
+                        let song1ArtistMatch = song1.artistName.localizedCaseInsensitiveContains(query)
+                        let song2ArtistMatch = song2.artistName.localizedCaseInsensitiveContains(query)
+                        
+                        // Both match title - sort alphabetically by title
+                        if song1TitleMatch && song2TitleMatch {
+                            return song1.title.localizedCaseInsensitiveCompare(song2.title) == .orderedAscending
+                        }
+                        // Only song1 matches title
+                        if song1TitleMatch { return true }
+                        // Only song2 matches title
+                        if song2TitleMatch { return false }
+                        
+                        // Both match artist - sort alphabetically by title
+                        if song1ArtistMatch && song2ArtistMatch {
+                            return song1.title.localizedCaseInsensitiveCompare(song2.title) == .orderedAscending
+                        }
+                        // Only song1 matches artist
+                        if song1ArtistMatch { return true }
+                        // Only song2 matches artist
+                        if song2ArtistMatch { return false }
+                        
+                        // Both match album (or neither) - sort alphabetically by title
                         return song1.title.localizedCaseInsensitiveCompare(song2.title) == .orderedAscending
                     }
-                    // Only song1 matches title
-                    if song1TitleMatch { return true }
-                    // Only song2 matches title
-                    if song2TitleMatch { return false }
+                }.value
+            } else {
+                // Search Apple Music catalog
+                do {
+                    var request = MusicCatalogSearchRequest(term: query, types: [Song.self])
+                    request.limit = 25
+                    let response = try await request.response()
                     
-                    // Both match artist - sort alphabetically by title
-                    if song1ArtistMatch && song2ArtistMatch {
-                        return song1.title.localizedCaseInsensitiveCompare(song2.title) == .orderedAscending
-                    }
-                    // Only song1 matches artist
-                    if song1ArtistMatch { return true }
-                    // Only song2 matches artist
-                    if song2ArtistMatch { return false }
-                    
-                    // Both match album (or neither) - sort alphabetically by title
-                    return song1.title.localizedCaseInsensitiveCompare(song2.title) == .orderedAscending
+                    results = Array(response.songs)
+                } catch {
+                    print("Error searching Apple Music: \(error)")
+                    results = []
                 }
-            }.value
+            }
             
             // Update UI on main thread
             guard !Task.isCancelled else { return }
             await MainActor.run {
                 self.filteredSongs = results
+                self.isLoading = false
             }
         }
     }
