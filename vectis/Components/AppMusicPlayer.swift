@@ -16,8 +16,10 @@ public class AppMusicPlayer: ObservableObject {
     @Published public var currentSong: Song? = nil
     @Published public var status: ApplicationMusicPlayer.PlaybackStatus?
     @Published public var queue: [Song] = []
+    @Published public var playbackTime: TimeInterval = 0
     
     private var cancellables = Set<AnyCancellable>()
+    private var playbackTimer: Timer?
     
     init() {
         // Configure audio session for background playback
@@ -46,12 +48,40 @@ public class AppMusicPlayer: ObservableObject {
         }
     }
     
+    @MainActor
     private func updatePlayerState() {
         if case let .song(song) = player.queue.currentEntry?.item {
-            currentSong = song as Song
+            currentSong = song
         }
-        queue = self.player.queue.entries.compactMap { $0.item as? Song }
+        queue = self.player.queue.entries.compactMap {
+            if case let .song(song) = $0.item {
+                return song
+            }
+            return nil
+        }
         status = self.player.state.playbackStatus
+        
+        // Start or stop timer based on playback status
+        if status == .playing {
+            startPlaybackTimer()
+        } else {
+            stopPlaybackTimer()
+        }
+    }
+    
+    private func startPlaybackTimer() {
+        guard playbackTimer == nil else { return }
+        playbackTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
+            guard let self = self else { return }
+            Task { @MainActor in
+                self.playbackTime = self.player.playbackTime
+            }
+        }
+    }
+    
+    private func stopPlaybackTimer() {
+        playbackTimer?.invalidate()
+        playbackTimer = nil
     }
     
     @MainActor
@@ -163,5 +193,10 @@ public class AppMusicPlayer: ObservableObject {
             print("Error skipping to last song: \(error.localizedDescription)")
         }
         
+    }
+    
+    @MainActor
+    func seek(to time: TimeInterval) async {
+        player.playbackTime = time
     }
 }
