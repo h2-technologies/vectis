@@ -27,6 +27,7 @@ struct LibraryView: View {
     @State var albums: [Album] = []
     @State var items: [CombinedItems] = []
     @State var chunkedItems: [[CombinedItems]] = []
+    @State private var isLoading = false
     
     var body: some View {
         NavigationStack {
@@ -62,20 +63,23 @@ struct LibraryView: View {
                         .font(.title2)
                         .fontWeight(.bold)
                     
-                    VStack {
-                        ForEach(Array(chunkedItems.enumerated()), id: \.offset) { index, row in
-                            ItemRow(row)
+                    if isLoading {
+                        ProgressView()
+                            .padding()
+                    } else {
+                        LazyVStack(spacing: 10) {
+                            ForEach(Array(chunkedItems.enumerated()), id: \.offset) { index, row in
+                                ItemRow(row)
+                            }
                         }
-                        
                     }
                 }
                 .padding(.leading, 15)
             }
-        }.onAppear() {
-            Task {
+        }.task {
+            if items.isEmpty {
                 await loadLibrary()
             }
-            
         }
     }
     
@@ -92,28 +96,35 @@ struct LibraryView: View {
     
     @MainActor
     func loadLibrary() async {
+        isLoading = true
+        defer { isLoading = false }
+        
         do {
-            let playlistRequest = MusicLibraryRequest<Playlist>()
-            let playlistResponse = try await playlistRequest.response()
-            playlists = playlistResponse.items.compactMap { $0 as Playlist }
-            playlists = playlists.sorted(by: { ($0.libraryAddedDate ?? Date.distantPast) > ($1.libraryAddedDate ?? Date.distantPast) })
-
-            let albumRequest = MusicLibraryRequest<Album>()
-            let albumResponse = try await albumRequest.response()
-            albums = albumResponse.items.compactMap{ $0 as Album }
-            albums = albums.sorted(by: { ($0.libraryAddedDate ?? Date.distantPast) > ($1.libraryAddedDate ?? Date.distantPast) })
+            // Fetch playlists and albums concurrently
+            async let playlistsFetch = MusicLibraryRequest<Playlist>().response()
+            async let albumsFetch = MusicLibraryRequest<Album>().response()
             
-            items = playlists.map { .playlist($0) } + albums.map { .album($0) }
+            // Wait for both to complete
+            let (playlistResponse, albumResponse) = try await (playlistsFetch, albumsFetch)
             
-            items = items.sorted(by: { ($0.libraryAddedDate ?? Date.distantPast) > ($1.libraryAddedDate ?? Date.distantPast) })
+            playlists = Array(playlistResponse.items)
+            albums = Array(albumResponse.items)
             
-            chunkedItems = chunkArray(array: items, chunkSize: 2)
+            // Sort once on combined items instead of sorting each collection separately
+            items = (playlists.map { CombinedItems.playlist($0) } + albums.map { CombinedItems.album($0) })
+                .sorted(by: { ($0.libraryAddedDate ?? Date.distantPast) > ($1.libraryAddedDate ?? Date.distantPast) })
             
+            // Limit to recent items only (e.g., 20 items = 10 rows)
+            let recentItems = Array(items.prefix(20))
+            
+            // Chunk in background
+            chunkedItems = await Task.detached {
+                chunkArray(array: recentItems, chunkSize: 2)
+            }.value
             
         } catch {
             print("Error fetching library: \(error)")
         }
-                
     }
 }
 

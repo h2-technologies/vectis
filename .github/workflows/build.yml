@@ -2,8 +2,6 @@ name: Build and Package Vectis
 
 on:
   push:
-    branches: [ main, develop ]
-  pull_request:
     branches: [ main ]
   workflow_dispatch:
 
@@ -42,14 +40,14 @@ jobs:
     - name: Create archive
       run: |
         cd $(dirname "$APP_PATH")
-        zip -r vectis-macos.zip vectis.app
-        mv vectis-macos.zip $GITHUB_WORKSPACE/
+        zip -r vectis-ios.zip vectis.app
+        mv vectis-ios.zip $GITHUB_WORKSPACE/
     
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: vectis-macos-app
-        path: vectis-macos.zip
+        name: vectis-ios-app
+        path: vectis-ios.zip
         retention-days: 30
     
     - name: Extract version from Xcode project
@@ -69,7 +67,7 @@ jobs:
         echo "- **Build:** ${{ steps.version.outputs.build }}" >> $GITHUB_STEP_SUMMARY
         echo "- **Build Date:** $(date)" >> $GITHUB_STEP_SUMMARY
         echo "- **Xcode Version:** $(xcodebuild -version | head -n 1)" >> $GITHUB_STEP_SUMMARY
-        echo "- **Artifact Name:** vectis-macos-app" >> $GITHUB_STEP_SUMMARY
+        echo "- **Artifact Name:** vectis-ios-app" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "✅ App successfully built and packaged!" >> $GITHUB_STEP_SUMMARY
     
@@ -87,7 +85,7 @@ jobs:
         tag_name: ${{ steps.tag.outputs.tag }}
         name: Vectis v${{ steps.version.outputs.version }}
         body: |
-          ## Vectis macOS Build
+          ## Vectis iOS Build
           
           **Version:** ${{ steps.version.outputs.version }}
           **Build:** ${{ steps.version.outputs.build }}
@@ -99,11 +97,11 @@ jobs:
           ${{ github.event.head_commit.message }}
           
           ### Download
-          Download `vectis-macos.zip`, extract it, and run `vectis.app`
+          Download `vectis-ios.zip`, extract it, and run `vectis.app`
           
           ---
           Built automatically by GitHub Actions
-        files: vectis-macos.zip
+        files: vectis-ios.zip
         draft: false
         prerelease: ${{ github.ref != 'refs/heads/main' }}
       env:

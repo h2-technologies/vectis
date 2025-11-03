@@ -39,6 +39,7 @@ struct ArtistSection: Identifiable {
 struct LibraryArtistView: View {
     
     @State var artists: [Artist] = []
+    @State private var isLoading = false
     
     private var groupedArists: [(key: String, value: [Artist])] {
         let groups = Dictionary(grouping: artists) { artist in
@@ -59,30 +60,39 @@ struct LibraryArtistView: View {
     var body: some View {
         let groupedSections: [ArtistSection] = groupedArists.map { ArtistSection(id: $0.key, artists: $0.value) }
         ScrollView {
-            VStack(alignment: .leading) {
+            LazyVStack(alignment: .leading) {
                 Text("Artists")
                     .font(.title)
                     .fontWeight(.bold)
-                ForEach(groupedSections) { section in
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(section.id)
-                            .font(.headline)
-                            .padding(.top, 12)
-                        ForEach(section.artists.indices, id: \.self) { idx in
-                            let artist = section.artists[idx]
-                            NavigationLink(destination: ArtistView(artist: artist)) {
-                                ArtistRow(artist: artist)
-                            }
-                            if idx < section.artists.count - 1 {
-                                Rectangle().frame(width: 365, height: 1).foregroundStyle(Color.gray)
+                
+                if isLoading {
+                    ProgressView()
+                        .padding()
+                } else {
+                    ForEach(groupedSections) { section in
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(section.id)
+                                .font(.headline)
+                                .padding(.top, 12)
+                            ForEach(section.artists.indices, id: \.self) { idx in
+                                let artist = section.artists[idx]
+                                NavigationLink(destination: ArtistView(artist: artist)) {
+                                    ArtistRow(artist: artist)
+                                }
+                                if idx < section.artists.count - 1 {
+                                    Rectangle()
+                                        .frame(height: 1)
+                                        .foregroundStyle(Color.gray)
+                                        .padding(.horizontal)
+                                }
                             }
                         }
                     }
                 }
             }
         }
-        .onAppear() {
-            Task {
+        .task {
+            if artists.isEmpty {
                 await loadArtists()
             }
         }
@@ -91,10 +101,13 @@ struct LibraryArtistView: View {
     
     @MainActor
     func loadArtists() async {
+        isLoading = true
+        defer { isLoading = false }
+        
         do {
             let request = MusicLibraryRequest<Artist>()
             let response = try await request.response()
-            artists = response.items.compactMap { $0 as Artist }
+            artists = Array(response.items)
             
         } catch {
             print("Error loading artists: \(error)")
