@@ -18,6 +18,7 @@ struct LibrarySongView: View {
     @EnvironmentObject private var appMusicPlayer: AppMusicPlayer
     
     @State var songs: [Song] = []
+    @State private var isLoading = false
     
     private var groupedSongs: [(key: String, value: [Song])] {
         let groups = Dictionary(grouping: songs) { song in
@@ -41,34 +42,42 @@ struct LibrarySongView: View {
     
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading) {
+            LazyVStack(alignment: .leading) {
                 Text("Songs")
                     .font(.title)
                     .fontWeight(.bold)
-                ForEach(sections) { section in
-                    SongSectionView(section: section, allSongs: songs, appMusicPlayer: appMusicPlayer)
+                
+                if isLoading {
+                    ProgressView()
+                        .padding()
+                } else {
+                    ForEach(sections) { section in
+                        SongSectionView(section: section, allSongs: songs, appMusicPlayer: appMusicPlayer)
+                    }
                 }
                 Spacer()
-            }.onAppear() {
-                Task {
-                    await loadLibrarySongs()
-                }
             }
             .padding(.leading, 10)
             .padding(.trailing, 10)
         }
-        
+        .task {
+            if songs.isEmpty {
+                await loadLibrarySongs()
+            }
+        }
     }
     
     @MainActor
     func loadLibrarySongs() async {
+        isLoading = true
+        defer { isLoading = false }
+        
         do {
             let request = MusicLibraryRequest<Song>()
             let response = try await request.response()
             
-            self.songs = response.items.compactMap { $0 as Song }
+            self.songs = Array(response.items)
             
-            print(response)
         } catch {
             print("Error fetching songs: \(error)")
         }

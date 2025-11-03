@@ -11,8 +11,12 @@ import MusicKit
 struct LibraryAlbumView: View {
     @State var albums: [Album]
     
+    private var sortedAlbums: [Album] {
+        albums.sorted(by: { $0.artistName < $1.artistName })
+    }
+    
     private var groupedAlbums: [(key: String, value: [Album])] {
-        let groups = Dictionary(grouping: albums) { album in
+        let groups = Dictionary(grouping: sortedAlbums) { album in
             String(album.artistName.prefix(1)).uppercased()
         }
         return groups.sorted { lhs, rhs in
@@ -27,12 +31,12 @@ struct LibraryAlbumView: View {
     }
     
     init(_ albums: [Album]) {
-        self.albums = albums.sorted(by: { $0.artistName < $1.artistName} )
+        self.albums = albums
     }
     
     var body: some View {
         ScrollView {
-            VStack (alignment: .leading) {
+            LazyVStack (alignment: .leading) {
                 Text("Albums")
                     .font(.title)
                     .fontWeight(.bold)
