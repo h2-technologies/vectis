@@ -8,11 +8,13 @@
 
 /* Begin PBXBuildFile section */
 		AF5D233E2EB5128300554FF4 /* build.yml in Resources */ = {isa = PBXBuildFile; fileRef = AF5D233B2EB5128300554FF4 /* build.yml */; };
+		AFF8E6F42EBA6C9C00422C42 /* readme.md in Resources */ = {isa = PBXBuildFile; fileRef = AFF8E6F32EBA6C9800422C42 /* readme.md */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		AF0C4C452E162D930010133E /* vectis.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = vectis.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF5D233B2EB5128300554FF4 /* build.yml */ = {isa = PBXFileReference; lastKnownFileType = text.yaml; path = build.yml; sourceTree = "<group>"; };
+		AFF8E6F32EBA6C9800422C42 /* readme.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = readme.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -61,6 +63,7 @@
 		AF0C4C3C2E162D930010133E = {
 			isa = PBXGroup;
 			children = (
+				AFF8E6F32EBA6C9800422C42 /* readme.md */,
 				AF5D233D2EB5128300554FF4 /* .github */,
 				AF0C4C472E162D930010133E /* vectis */,
 				AF0C4C462E162D930010133E /* Products */,
@@ -155,6 +158,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AFF8E6F42EBA6C9C00422C42 /* readme.md in Resources */,
 				AF5D233E2EB5128300554FF4 /* build.yml in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
