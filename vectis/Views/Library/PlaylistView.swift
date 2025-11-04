@@ -134,11 +134,23 @@ struct PlaylistView: View {
                     }
                     
                 }
+                
+                // Playlist duration at the bottom
+                if let tracks = playlist.tracks {
+                    let totalDuration = tracks.reduce(0.0) { $0 + ($1.duration ?? 0) }
+                    HStack {
+                        Text(formatPlaylistDuration(tracks.count, totalDuration))
+                            .font(.caption)
+                            .foregroundStyle(Color.gray)
+                        Spacer()
+                    }
+                    .padding(.top, 15)
+                    .padding(.bottom, 10)
+                    .padding(.leading, 4)
+                }
             }
             
             //TODO: Add an "Add Songs" button
-            
-            //TODO: Display song duration
             
             Spacer()
         }
@@ -151,6 +163,22 @@ struct PlaylistView: View {
         }
         .padding(.leading, 10)
         .padding(.trailing, 10)
+    }
+    
+    private func formatPlaylistDuration(_ songCount: Int, _ duration: TimeInterval) -> String {
+        let totalSeconds = Int(duration)
+        let hours = totalSeconds / 3600
+        let minutes = (totalSeconds % 3600) / 60
+        
+        let songText = songCount == 1 ? "song" : "songs"
+        let hourText = hours == 1 ? "hour" : "hours"
+        let minuteText = minutes == 1 ? "minute" : "minutes"
+        
+        if hours > 0 {
+            return "\(songCount) \(songText), \(hours) \(hourText) \(minutes) \(minuteText)"
+        } else {
+            return "\(songCount) \(songText), \(minutes) \(minuteText)"
+        }
     }
     
 }

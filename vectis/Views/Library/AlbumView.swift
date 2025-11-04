@@ -131,6 +131,18 @@ struct AlbumView: View {
                         Rectangle().frame(width: 350, height: 1)
                             .foregroundStyle(Color(red: 69/255, green: 74/255, blue: 82/255))
                     }
+                    
+                    // Album duration at the bottom
+                    let totalDuration = tracks.reduce(0.0) { $0 + ($1.duration ?? 0) }
+                    HStack {
+                        Text(formatAlbumDuration(tracks.count, totalDuration))
+                            .font(.caption)
+                            .foregroundStyle(Color.gray)
+                        Spacer()
+                    }
+                    .padding(.top, 15)
+                    .padding(.bottom, 10)
+                    .padding(.leading, 4)
                 }
                 
                 Spacer()
@@ -146,5 +158,21 @@ struct AlbumView: View {
         }
         .padding(.leading, 10)
         .padding(.trailing, 10)
+    }
+    
+    private func formatAlbumDuration(_ songCount: Int, _ duration: TimeInterval) -> String {
+        let totalSeconds = Int(duration)
+        let hours = totalSeconds / 3600
+        let minutes = (totalSeconds % 3600) / 60
+        
+        let songText = songCount == 1 ? "song" : "songs"
+        let hourText = hours == 1 ? "hour" : "hours"
+        let minuteText = minutes == 1 ? "minute" : "minutes"
+        
+        if hours > 0 {
+            return "\(songCount) \(songText), \(hours) \(hourText) \(minutes) \(minuteText)"
+        } else {
+            return "\(songCount) \(songText), \(minutes) \(minuteText)"
+        }
     }
 }
