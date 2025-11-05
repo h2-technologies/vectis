@@ -1,0 +1,263 @@
+//
+//  PlaylistView.swift
+//  vectis
+//
+//  Created by Samuel Valencia on 7/12/25.
+//
+
+import SwiftUI
+import MusicKit
+
+struct PlaylistView: View {
+    
+    @State var playlist: MusicItemCollection<Playlist>.Element
+    
+    @EnvironmentObject private var appMusicPlayer: AppMusicPlayer
+    
+    init(_ playlist: MusicItemCollection<Playlist>.Element) {
+        self.playlist = playlist
+    }
+    
+    var body: some View {
+        ScrollView {
+            if let artwork = playlist.artwork {
+                ArtworkImage(artwork, width: 225, height: 225)
+                    .cornerRadius(20)
+            }
+            
+            
+            Text(playlist.name)
+                .bold()
+            
+            if let lastModifiedDate = playlist.lastModifiedDate {
+                Text("Updated \(RelativeDateTimeFormatter().localizedString(for: lastModifiedDate, relativeTo: Date()))")
+                    .font(.caption)
+                    .foregroundStyle(Color.gray)
+            }
+            
+            HStack {
+                Button {
+                    Task {
+                        if let tracks = playlist.tracks {
+                            await appMusicPlayer.enqueuePlaylist(playlist: tracks, firstSong: tracks[0])
+                            await appMusicPlayer.play()
+                        }
+                        
+                    }
+                } label: {
+                    HStack {
+                        Image(systemName: "play.fill")
+                        Text("Play")
+                    }
+                    .frame(height: 40)
+                    .foregroundStyle(.pink)
+                }
+                .frame(width: 150, alignment: .center)
+                .background(Color(red: 40/255, green: 45/255, blue: 45/255))
+                .cornerRadius(20)
+                
+                
+                Button {
+                    Task {
+                        if let tracks = playlist.tracks {
+                            await appMusicPlayer.enqueuePlaylist(playlist: tracks, firstSong: tracks[0])
+                            appMusicPlayer.shuffle(true)
+                            await appMusicPlayer.play()
+                        }
+                    }
+                } label: {
+                    HStack {
+                        Image(systemName: "shuffle")
+                        Text("Shuffle")
+                    }
+                    .frame(height: 40)
+                    .foregroundStyle(.pink)
+                }
+                .frame(width: 150, alignment: .center)
+                .background(Color(red: 40/255, green: 45/255, blue: 45/255))
+                .cornerRadius(20)
+            }.padding(.top, 10)
+            
+            Rectangle().frame(width:350, height: 1)
+                .foregroundStyle(.gray)
+                .padding(.top, 5)
+                .padding(.bottom, 5)
+            
+            if let tracks = playlist.tracks {
+                VStack {
+                    ForEach(tracks, id: \.id) { track in
+                        HStack {
+                            Button(action: {
+                                Task {
+                                    await appMusicPlayer.enqueuePlaylist(playlist: tracks, firstSong: track)
+                                    await appMusicPlayer.play()
+                                }
+                            }) {
+                                HStack {
+                                    //TODO: implement star for favorites
+                                    //reference issue #20
+                                    if let trackArtwork = track.artwork {
+                                        ArtworkImage(trackArtwork, width: 75)
+                                            .frame(width: 50, height: 50)
+                                            .cornerRadius(5)
+                                            .padding(.trailing, 5)
+                                    }
+                                    
+                                    
+                                    VStack(alignment: .leading) {
+                                        Text(track.title)
+                                            .lineLimit(1)
+                                            
+                                        Text(track.artistName)
+                                            .font(.caption)
+                                            .foregroundStyle(.gray)
+                                    }
+                                    
+                                    Spacer()
+                                }
+                            }
+                            .foregroundStyle(.white)
+                            
+                            Menu {
+                                Button(action: {
+                                    Task {
+                                        do {
+                                            let detailedTrack = try await track.with(.url)
+                                            if let url = detailedTrack.url {
+                                                print("Track URL: \(url)")
+                                                await MainActor.run {
+                                                    let activityViewController = UIActivityViewController(activityItems: [url, "Check out \(track.title) by \(track.artistName)"], applicationActivities: nil)
+                                                    if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                                                       let window = windowScene.windows.first,
+                                                       let rootViewController = window.rootViewController {
+                                                        rootViewController.present(activityViewController, animated: true)
+                                                    }
+                                                }
+                                            } else {
+                                                print("No URL available for track")
+                                            }
+                                        } catch {
+                                            print("Error loading track URL: \(error)")
+                                        }
+                                    }
+                                }) {
+                                    Label("Share", systemImage: "square.and.arrow.up")
+                                }
+                                
+                                Button(action: {
+                                    // TODO: Implement pin song functionality
+                                    print("Pin Song")
+                                }) {
+                                    Label("Pin Song", systemImage: "pin")
+                                }
+                                
+                                Button(action: {
+                                    // TODO: Implement add to playlist functionality
+                                    print("Add to a Playlist")
+                                }) {
+                                    Label("Add to a Playlist", systemImage: "text.badge.plus")
+                                }
+                                
+                                Button(action: {
+                                    // TODO: Implement play next functionality
+                                    print("Play Next")
+                                }) {
+                                    Label("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward")
+                                }
+                                
+                                Button(action: {
+                                    // TODO: Implement create station functionality
+                                    print("Create Station")
+                                }) {
+                                    Label("Create Station", systemImage: "antenna.radiowaves.left.and.right")
+                                }
+                                
+                                Button(action: {
+                                    // TODO: Implement go to album functionality
+                                    print("Go to Album")
+                                }) {
+                                    Label("Go to Album", systemImage: "square.stack")
+                                }
+                                
+                                Button(action: {
+                                    // TODO: Implement view credits functionality
+                                    print("View Credits")
+                                }) {
+                                    Label("View Credits", systemImage: "person.2")
+                                }
+                                
+                                Button(role: .destructive, action: {
+                                    // TODO: Implement remove from playlist functionality
+                                    print("Remove from Playlist")
+                                }) {
+                                    Label("Remove from Playlist", systemImage: "trash")
+                                }
+                                
+                                Button(action: {
+                                    // TODO: Implement add/remove download functionality
+                                    print("Add/Remove Download")
+                                }) {
+                                    Label("Download", systemImage: "arrow.down.circle")
+                                }
+                            } label: {
+                                Image(systemName: "ellipsis")
+                                    .foregroundStyle(.white)
+                                    .font(.system(size: 18))
+                                    .frame(width: 44, height: 44)
+                                    .contentShape(Rectangle())
+                            }
+                        }
+                        .padding(.leading, 4)
+                        .padding(.trailing, 4)
+                        .padding(.bottom, 2.5)
+                        
+                        Rectangle().frame(width: 350, height: 1)
+                            .foregroundStyle(Color(red: 69/255, green: 74/255, blue: 82/255))
+                    }
+                    
+                }
+                
+                // Playlist duration at the bottom
+                HStack {
+                    Text(formatPlaylistDuration(tracks.count, tracks.reduce(0.0) { $0 + ($1.duration ?? 0) }))
+                        .font(.caption)
+                        .foregroundStyle(Color.gray)
+                    Spacer()
+                }
+                .padding(.top, 15)
+                .padding(.bottom, 10)
+                .padding(.leading, 4)
+            }
+            
+            //TODO: Add an "Add Songs" button
+            
+            Spacer()
+        }
+        .task(id: playlist.id) {
+            do {
+                self.playlist = try await playlist.with(.tracks)
+            } catch {
+                print("Error fetching playlist tracks: \(error)")
+            }
+        }
+        .padding(.leading, 10)
+        .padding(.trailing, 10)
+    }
+    
+    private func formatPlaylistDuration(_ songCount: Int, _ duration: TimeInterval) -> String {
+        let totalSeconds = Int(duration)
+        let hours = totalSeconds / 3600
+        let minutes = (totalSeconds % 3600) / 60
+        
+        let songText = songCount == 1 ? "song" : "songs"
+        let hourText = hours == 1 ? "hour" : "hours"
+        let minuteText = minutes == 1 ? "minute" : "minutes"
+        
+        if hours > 0 {
+            return "\(songCount) \(songText), \(hours) \(hourText) \(minutes) \(minuteText)"
+        } else {
+            return "\(songCount) \(songText), \(minutes) \(minuteText)"
+        }
+    }
+    
+}

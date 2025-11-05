@@ -84,70 +84,7 @@ struct PlaylistView: View {
                 .padding(.bottom, 5)
             
             if let tracks = playlist.tracks {
-                VStack {
-                    ForEach(tracks, id: \.id) { track in
-                        Button(action: {
-                            Task {
-                                await appMusicPlayer.enqueuePlaylist(playlist: tracks, firstSong: track)
-                                await appMusicPlayer.play()
-                            }
-                        }) {
-                                //TODO: implement star for favorites
-                                //reference issue #20
-                                if let trackArtwork = track.artwork {
-                                    ArtworkImage(trackArtwork, width: 75)
-                                        .frame(width: 50, height: 50)
-                                        .cornerRadius(5)
-                                        .padding(.trailing, 5)
-                                }
-                                
-                                
-                                VStack(alignment: .leading) {
-                                    Text(track.title)
-                                        .lineLimit(1)
-                                        
-                                    Text(track.artistName)
-                                        .font(.caption)
-                                        .foregroundStyle(.gray)
-                                }
-                                
-                                Spacer()
-                                
-                                Button(action: {
-                                    //TODO: Add action menu
-                                    //Ref issue #21
-                                    print("Menu")
-                                }) {
-                                    Image(systemName: "ellipsis")
-                                }
-                                .padding(.trailing, 5)
-                            
-                            
-                        }
-                        .padding(.leading, 4)
-                        .padding(.trailing, 4)
-                        .padding(.bottom, 2.5)
-                        .foregroundStyle(.white)
-                        
-                        Rectangle().frame(width: 350, height: 1)
-                            .foregroundStyle(Color(red: 69/255, green: 74/255, blue: 82/255))
-                    }
-                    
-                }
-                
-                // Playlist duration at the bottom
-                if let tracks = playlist.tracks {
-                    let totalDuration = tracks.reduce(0.0) { $0 + ($1.duration ?? 0) }
-                    HStack {
-                        Text(formatPlaylistDuration(tracks.count, totalDuration))
-                            .font(.caption)
-                            .foregroundStyle(Color.gray)
-                        Spacer()
-                    }
-                    .padding(.top, 15)
-                    .padding(.bottom, 10)
-                    .padding(.leading, 4)
-                }
+                trackListView(tracks: tracks)
             }
             
             //TODO: Add an "Add Songs" button
@@ -163,6 +100,153 @@ struct PlaylistView: View {
         }
         .padding(.leading, 10)
         .padding(.trailing, 10)
+    }
+    
+    @ViewBuilder
+    private func trackListView(tracks: MusicItemCollection<Track>) -> some View {
+        VStack {
+            ForEach(Array(tracks), id: \.id) { track in
+                HStack {
+                    Button(action: {
+                        Task {
+                            await appMusicPlayer.enqueuePlaylist(playlist: tracks, firstSong: track)
+                            await appMusicPlayer.play()
+                        }
+                    }) {
+                        HStack {
+                            //TODO: implement star for favorites
+                            //reference issue #20
+                            if let trackArtwork = track.artwork {
+                                ArtworkImage(trackArtwork, width: 75)
+                                    .frame(width: 50, height: 50)
+                                    .cornerRadius(5)
+                                    .padding(.trailing, 5)
+                            }
+                            
+                            
+                            VStack(alignment: .leading) {
+                                Text(track.title)
+                                    .lineLimit(1)
+                                    
+                                Text(track.artistName)
+                                    .font(.caption)
+                                    .foregroundStyle(.gray)
+                            }
+                            
+                            Spacer()
+                        }
+                    }
+                    .foregroundStyle(.white)
+                    
+                    Menu {
+                        Button(action: {
+                            Task {
+                                do {
+                                    let detailedTrack = try await track.with(.url)
+                                    if let url = detailedTrack.url {
+                                        print("Track URL: \(url)")
+                                        await MainActor.run {
+                                            let activityViewController = UIActivityViewController(activityItems: [url, "Check out \(track.title) by \(track.artistName)"], applicationActivities: nil)
+                                            if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                                               let window = windowScene.windows.first,
+                                               let rootViewController = window.rootViewController {
+                                                rootViewController.present(activityViewController, animated: true)
+                                            }
+                                        }
+                                    } else {
+                                        print("No URL available for track")
+                                    }
+                                } catch {
+                                    print("Error loading track URL: \(error)")
+                                }
+                            }
+                        }) {
+                            Label("Share", systemImage: "square.and.arrow.up")
+                        }
+                        
+                        Button(action: {
+                            // TODO: Implement pin song functionality
+                            print("Pin Song")
+                        }) {
+                            Label("Pin Song", systemImage: "pin")
+                        }
+                        
+                        Button(action: {
+                            // TODO: Implement add to playlist functionality
+                            print("Add to a Playlist")
+                        }) {
+                            Label("Add to a Playlist", systemImage: "text.badge.plus")
+                        }
+                        
+                        Button(action: {
+                            // TODO: Implement play next functionality
+                            print("Play Next")
+                        }) {
+                            Label("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward")
+                        }
+                        
+                        Button(action: {
+                            // TODO: Implement create station functionality
+                            print("Create Station")
+                        }) {
+                            Label("Create Station", systemImage: "antenna.radiowaves.left.and.right")
+                        }
+                        
+                        Button(action: {
+                            // TODO: Implement go to album functionality
+                            print("Go to Album")
+                        }) {
+                            Label("Go to Album", systemImage: "square.stack")
+                        }
+                        
+                        Button(action: {
+                            // TODO: Implement view credits functionality
+                            print("View Credits")
+                        }) {
+                            Label("View Credits", systemImage: "person.2")
+                        }
+                        
+                        Button(role: .destructive, action: {
+                            // TODO: Implement remove from playlist functionality
+                            print("Remove from Playlist")
+                        }) {
+                            Label("Remove from Playlist", systemImage: "trash")
+                        }
+                        
+                        Button(action: {
+                            // TODO: Implement add/remove download functionality
+                            print("Add/Remove Download")
+                        }) {
+                            Label("Download", systemImage: "arrow.down.circle")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis")
+                            .foregroundStyle(.white)
+                            .font(.system(size: 18))
+                            .frame(width: 44, height: 44)
+                            .contentShape(Rectangle())
+                    }
+                }
+                .padding(.leading, 4)
+                .padding(.trailing, 4)
+                .padding(.bottom, 2.5)
+                
+                Rectangle().frame(width: 350, height: 1)
+                    .foregroundStyle(Color(red: 69/255, green: 74/255, blue: 82/255))
+            }
+            
+        }
+        
+        // Playlist duration at the bottom
+        HStack {
+            Text(formatPlaylistDuration(tracks.count, tracks.reduce(0.0) { $0 + ($1.duration ?? 0) }))
+                .font(.caption)
+                .foregroundStyle(Color.gray)
+            Spacer()
+        }
+        .padding(.top, 15)
+        .padding(.bottom, 10)
+        .padding(.leading, 4)
     }
     
     private func formatPlaylistDuration(_ songCount: Int, _ duration: TimeInterval) -> String {
