@@ -22,7 +22,7 @@ struct PlaylistView: View {
         ScrollView {
             if let artwork = playlist.artwork {
                 ArtworkImage(artwork, width: 225, height: 225)
-                    .cornerRadius(20)
+                    .clipShape(.rect(cornerRadius: 20))
             }
             
             
@@ -54,7 +54,7 @@ struct PlaylistView: View {
                 }
                 .frame(width: 150, alignment: .center)
                 .background(Color(red: 40/255, green: 45/255, blue: 45/255))
-                .cornerRadius(20)
+                .clipShape(.rect(cornerRadius: 20))
                 
                 
                 Button {
@@ -75,7 +75,7 @@ struct PlaylistView: View {
                 }
                 .frame(width: 150, alignment: .center)
                 .background(Color(red: 40/255, green: 45/255, blue: 45/255))
-                .cornerRadius(20)
+                .clipShape(.rect(cornerRadius: 20))
             }.padding(.top, 10)
             
             Rectangle().frame(width:350, height: 1)
@@ -99,7 +99,6 @@ struct PlaylistView: View {
             }
         }
         .padding(.leading, 10)
-        .padding(.trailing, 10)
     }
     
     @ViewBuilder
@@ -123,10 +122,9 @@ struct PlaylistView: View {
         .padding(.leading, 4)
     }
     
-    private func formatPlaylistDuration(_ songCount: Int, _ duration: TimeInterval) -> String {
-        let totalSeconds = Int(duration)
-        let hours = totalSeconds / 3600
-        let minutes = (totalSeconds % 3600) / 60
+    private func formatPlaylistDuration(_ songCount: Int, _ totalDuration: TimeInterval) -> String {
+        let hours = Int(totalDuration) / 3600
+        let minutes = (Int(totalDuration) % 3600) / 60
         
         let songText = songCount == 1 ? "song" : "songs"
         let hourText = hours == 1 ? "hour" : "hours"
@@ -138,5 +136,4 @@ struct PlaylistView: View {
             return "\(songCount) \(songText), \(minutes) \(minuteText)"
         }
     }
-    
 }

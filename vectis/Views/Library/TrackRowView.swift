@@ -47,30 +47,12 @@ struct TrackRowView: View {
                 Menu {
                     Button(action: {
                         Task {
-                            let trackID = track.id.rawValue
-                            if let url = URL(string: "https://music.apple.com/us/song/\(trackID)") {
-                                print("Track URL: \(url)")
-                                await MainActor.run {
-                                    let activityViewController = UIActivityViewController(activityItems: [url, "Check out \(track.title) by \(track.artistName)"], applicationActivities: nil)
-                                    if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-                                       let window = windowScene.windows.first,
-                                       let rootViewController = window.rootViewController {
-                                        rootViewController.present(activityViewController, animated: true)
-                                    }
-                                }
-                            } else {
-                                print("Failed to create URL for track")
-                            }
+                            print("Share button tapped for: \(track.title)")
+                            
+                            print(track.url)
                         }
                     }) {
                         Label("Share", systemImage: "square.and.arrow.up")
-                    }
-                    
-                    Button(action: {
-                        // TODO: Implement pin song functionality
-                        print("Pin Song")
-                    }) {
-                        Label("Pin Song", systemImage: "pin")
                     }
                     
                     Button(action: {
