@@ -12,6 +12,7 @@ struct TrackRowView: View {
     let track: Track
     let tracks: MusicItemCollection<Track>
     @EnvironmentObject private var appMusicPlayer: AppMusicPlayer
+    @State private var webLinkURL: URL? = nil
     
     var body: some View {
         VStack(spacing: 0) {
@@ -49,7 +50,7 @@ struct TrackRowView: View {
                         Task {
                             print("Share button tapped for: \(track.title)")
                             
-                            print(track.url)
+                            print()
                         }
                     }) {
                         Label("Share", systemImage: "square.and.arrow.up")
@@ -118,6 +119,33 @@ struct TrackRowView: View {
             Rectangle()
                 .frame(width: 350, height: 1)
                 .foregroundStyle(Color(red: 69/255, green: 74/255, blue: 82/255))
+        }
+        .task {
+            
+        }
+    }
+    
+    func getShareURL() async {
+        if let existingURL = track.url {
+            self.webLinkURL = existingURL
+            return
+        }
+        
+        do {
+            let subscription = try await MusicSubscription.current
+            
+            guard let storefrontID = subscription.storefront?.id else {
+                print("Error: Storefront ID not available")
+                return
+            }
+            
+            let url = URL(string: "v1/catalog/\(storefrontID.rawValue)/songs/\(track.id.rawValue)")
+            
+            guard let fetchURL = url else { return }
+            let request = MusicRequest(url: fetchURL)
+            
+        } catch {
+            print("Error fetching share URL: \(error)")
         }
     }
 }
