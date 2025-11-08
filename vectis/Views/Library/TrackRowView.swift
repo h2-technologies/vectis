@@ -12,7 +12,8 @@ struct TrackRowView: View {
     let track: Track
     let tracks: MusicItemCollection<Track>
     @EnvironmentObject private var appMusicPlayer: AppMusicPlayer
-    @State private var webLinkURL: URL? = nil
+    @State private var catalogURL: URL?
+    @State private var isLoadingURL = false
     
     var body: some View {
         VStack(spacing: 0) {
@@ -46,16 +47,21 @@ struct TrackRowView: View {
                 .foregroundStyle(.white)
                 
                 Menu {
-                    Button(action: {
-                        Task {
-                            print("Share button tapped for: \(track.title)")
-                            
-                            print()
+                    if let url = catalogURL {
+                        ShareLink(item: url, subject: Text(track.title), message: Text("Check out this song!")) {
+                            Label("Share", systemImage: "square.and.arrow.up")
                         }
-                    }) {
-                        Label("Share", systemImage: "square.and.arrow.up")
+                    } else {
+                        Button(action: {
+                            Task {
+                                await fetchCatalogURL()
+                            }
+                        }) {
+                            Label("Share", systemImage: "square.and.arrow.up")
+                        }
                     }
                     
+                    // ...existing menu items...
                     Button(action: {
                         // TODO: Implement add to playlist functionality
                         print("Add to a Playlist")
@@ -111,6 +117,12 @@ struct TrackRowView: View {
                         .frame(width: 44, height: 44)
                         .contentShape(Rectangle())
                 }
+                .onAppear {
+                    // Fetch the catalog URL when the menu appears
+                    Task {
+                        await fetchCatalogURL()
+                    }
+                }
             }
             .padding(.leading, 4)
             .padding(.trailing, 4)
@@ -120,32 +132,79 @@ struct TrackRowView: View {
                 .frame(width: 350, height: 1)
                 .foregroundStyle(Color(red: 69/255, green: 74/255, blue: 82/255))
         }
-        .task {
-            
-        }
     }
     
-    func getShareURL() async {
+    @MainActor
+    private func fetchCatalogURL() async {
+        // Prevent duplicate API calls
+        guard catalogURL == nil, !isLoadingURL else { return }
+        isLoadingURL = true
+        defer { isLoadingURL = false }
+        
+        // First check if the track already has a URL (catalog tracks)
         if let existingURL = track.url {
-            self.webLinkURL = existingURL
+            catalogURL = existingURL
+            print("✅ Track already has URL: \(existingURL.absoluteString)")
             return
         }
         
+        // If no URL, search the catalog
         do {
-            let subscription = try await MusicSubscription.current
+            // Search using both title and artist for better results
+            let searchTerm = "\(track.title) \(track.artistName)"
+            var searchRequest = MusicCatalogSearchRequest(term: searchTerm, types: [Song.self])
+            searchRequest.limit = 10
             
-            guard let storefrontID = subscription.storefront?.id else {
-                print("Error: Storefront ID not available")
-                return
+            let searchResponse = try await searchRequest.response()
+            
+            print("🔍 Searching for: \(searchTerm)")
+            print("📊 Found \(searchResponse.songs.count) results")
+            
+            // Find the matching song by comparing title and artist
+            if let matchingSong = searchResponse.songs.first(where: { song in
+                song.title.lowercased() == track.title.lowercased() &&
+                song.artistName.lowercased() == track.artistName.lowercased()
+            }) {
+                // Try to use the song's URL if available
+                if let songURL = matchingSong.url {
+                    catalogURL = songURL
+                    print("✅ Found exact match with URL: \(songURL.absoluteString)")
+                } else {
+                    // Construct Apple Music universal link from song ID
+                    let songID = matchingSong.id.rawValue
+                    print("🔧 Raw song ID: \(songID)")
+                    // Use Apple Music universal link format
+                    if let constructedURL = URL(string: "https://music.apple.com/us/song/\(songID)") {
+                        catalogURL = constructedURL
+                        print("✅ Found exact match, constructed URL: \(constructedURL.absoluteString)")
+                    } else {
+                        print("❌ Failed to construct URL from ID: \(songID)")
+                    }
+                }
+            } else if let firstResult = searchResponse.songs.first {
+                // Use first result as fallback
+                if let songURL = firstResult.url {
+                    catalogURL = songURL
+                    print("⚠️ Using first result with URL: \(songURL.absoluteString)")
+                } else {
+                    var songID = firstResult.id.rawValue
+                    print("🔧 Raw song ID (first result): \(songID)")
+                    if songID.hasPrefix("s.") {
+                        songID = String(songID.dropFirst(2))
+                    }
+                    if let constructedURL = URL(string: "https://music.apple.com/us/song/id\(songID)") {
+                        catalogURL = constructedURL
+                        print("⚠️ Using first result, constructed URL: \(constructedURL.absoluteString)")
+                    } else {
+                        print("❌ Failed to construct URL from ID: \(songID)")
+                    }
+                }
+            } else {
+                print("❌ No search results found")
             }
             
-            let url = URL(string: "v1/catalog/\(storefrontID.rawValue)/songs/\(track.id.rawValue)")
-            
-            guard let fetchURL = url else { return }
-            let request = MusicRequest(url: fetchURL)
-            
         } catch {
-            print("Error fetching share URL: \(error)")
+            print("❌ Error fetching catalog track: \(error)")
         }
     }
 }
