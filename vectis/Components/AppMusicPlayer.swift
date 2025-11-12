@@ -112,6 +112,8 @@ public class AppMusicPlayer: ObservableObject {
         }
     }
     
+    /// Inserts a song to play immediately after the current track
+    /// - Parameter song: The track to insert into the queue
     @MainActor
     func playNext(_ song: MusicItemCollection<Track>.Element) async {
         do {
