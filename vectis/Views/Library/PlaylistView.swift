@@ -105,8 +105,17 @@ struct PlaylistView: View {
     private func trackListView(tracks: MusicItemCollection<Track>) -> some View {
         VStack {
             ForEach(Array(tracks), id: \.id) { track in
-                TrackRowView(track: track, tracks: tracks)
-                    .environmentObject(appMusicPlayer)
+                TrackRowView(
+                    track: track, 
+                    tracks: tracks,
+                    isPlaylistContext: true,
+                    onRemoveFromPlaylist: {
+                        Task {
+                            await removeTrackFromPlaylist(track)
+                        }
+                    }
+                )
+                .environmentObject(appMusicPlayer)
             }
         }
         
@@ -120,6 +129,15 @@ struct PlaylistView: View {
         .padding(.top, 15)
         .padding(.bottom, 10)
         .padding(.leading, 4)
+    }
+    
+    @MainActor
+    private func removeTrackFromPlaylist(_ track: Track) async {
+        // Note: MusicKit's Playlist editing capabilities are limited
+        // This is a placeholder for when the API supports it
+        print("Remove track from playlist: \(track.title)")
+        // TODO: Implement actual removal when MusicKit API supports it
+        // For now, just log the action
     }
     
     private func formatPlaylistDuration(_ songCount: Int, _ totalDuration: TimeInterval) -> String {

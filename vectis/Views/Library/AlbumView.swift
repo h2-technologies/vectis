@@ -99,34 +99,83 @@ struct AlbumView: View {
             if let tracks = album.tracks {
                 VStack {
                     ForEach(Array(tracks.enumerated()), id: \.element.id) { index, track in
-                        Button(action: {
-                            Task {
-                                await appMusicPlayer.enqueuePlaylist(playlist: tracks, firstSong: track)
-                                await appMusicPlayer.play()
+                        HStack {
+                            Button(action: {
+                                Task {
+                                    await appMusicPlayer.enqueuePlaylist(playlist: tracks, firstSong: track)
+                                    await appMusicPlayer.play()
+                                }
+                            }) {
+                                HStack {
+                                    Text("\(index + 1)") // Track number
+                                        .padding(.trailing, 5)
+                                        .foregroundStyle(.gray)
+                                    
+                                    Text(track.title)
+                                        .lineLimit(1)
+                                    
+                                    Spacer()
+                                }
                             }
-                        }) {
-                                Text("\(index + 1)") // Track number
-                                    .padding(.trailing, 5)
-                                    .foregroundStyle(.gray)
-                                
-                                Text(track.title)
-                                    .lineLimit(1)
-                                
-                                Spacer()
+                            .foregroundStyle(.white)
+                            
+                            Menu {
+                                Button(action: {
+                                    Task {
+                                        if let url = track.url {
+                                            // Share using the track's URL if available
+                                            print("Share: \(url)")
+                                        }
+                                    }
+                                }) {
+                                    Label("Share", systemImage: "square.and.arrow.up")
+                                }
                                 
                                 Button(action: {
-                                    print("Menu")
+                                    // TODO: Implement add to playlist functionality
+                                    print("Add to a Playlist")
                                 }) {
-                                    Image(systemName: "ellipsis")
+                                    Label("Add to a Playlist", systemImage: "text.badge.plus")
                                 }
-                                .padding(.trailing, 5)
-                            
+                                
+                                Button(action: {
+                                    Task {
+                                        await appMusicPlayer.playNext(track)
+                                    }
+                                }) {
+                                    Label("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward")
+                                }
+                                
+                                Button(action: {
+                                    // TODO: Implement create station functionality
+                                    print("Create Station")
+                                }) {
+                                    Label("Create Station", systemImage: "antenna.radiowaves.left.and.right")
+                                }
+                                
+                                Button(action: {
+                                    // TODO: Implement view credits functionality
+                                    print("View Credits")
+                                }) {
+                                    Label("View Credits", systemImage: "person.2")
+                                }
+                                
+                                Button(action: {
+                                    // TODO: Implement download functionality
+                                    print("Download")
+                                }) {
+                                    Label("Download", systemImage: "arrow.down.circle")
+                                }
+                            } label: {
+                                Image(systemName: "ellipsis")
+                                    .foregroundStyle(.white)
+                            }
+                            .padding(.trailing, 5)
                         }
                         .frame(height: 30)
                         .padding(.leading, 4)
                         .padding(.trailing, 4)
                         .padding(.bottom, 2.5)
-                        .foregroundStyle(.white)
                         
                         Rectangle().frame(width: 350, height: 1)
                             .foregroundStyle(Color(red: 69/255, green: 74/255, blue: 82/255))
