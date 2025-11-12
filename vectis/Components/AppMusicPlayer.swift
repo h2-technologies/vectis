@@ -112,6 +112,19 @@ public class AppMusicPlayer: ObservableObject {
         }
     }
     
+    @MainActor
+    func playNext(_ song: MusicItemCollection<Track>.Element) async {
+        do {
+            if player.queue.currentEntry == nil {
+                player.queue = ApplicationMusicPlayer.Queue(for: MusicItemCollection([song]))
+            } else {
+                try await player.queue.insert(song, position: .afterCurrentEntry)
+            }
+        } catch {
+            print("Error queuing song to play next: \(error.localizedDescription)")
+        }
+    }
+    
     //Replaces the queue with a new queue of the playlist
     @MainActor
     func enqueuePlaylist<T: PlayableMusicItem>(playlist: MusicItemCollection<T>, firstSong: T) async {

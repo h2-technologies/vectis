@@ -14,6 +14,8 @@ struct TrackRowView: View {
     @EnvironmentObject private var appMusicPlayer: AppMusicPlayer
     @State private var catalogURL: URL?
     @State private var isLoadingURL = false
+    var isPlaylistContext: Bool = false
+    var onRemoveFromPlaylist: (() -> Void)? = nil
     
     var body: some View {
         VStack(spacing: 0) {
@@ -61,7 +63,6 @@ struct TrackRowView: View {
                         }
                     }
                     
-                    // ...existing menu items...
                     Button(action: {
                         // TODO: Implement add to playlist functionality
                         print("Add to a Playlist")
@@ -70,24 +71,24 @@ struct TrackRowView: View {
                     }
                     
                     Button(action: {
-                        // TODO: Implement play next functionality
-                        print("Play Next")
+                        Task {
+                            await appMusicPlayer.playNext(track)
+                        }
                     }) {
                         Label("Play Next", systemImage: "text.line.first.and.arrowtriangle.forward")
                     }
                     
                     Button(action: {
-                        // TODO: Implement create station functionality
+                        // TODO: Implement create station functionality (Blocked by issue #24)
                         print("Create Station")
                     }) {
                         Label("Create Station", systemImage: "antenna.radiowaves.left.and.right")
                     }
                     
-                    Button(action: {
-                        // TODO: Implement go to album functionality
-                        print("Go to Album")
-                    }) {
-                        Label("Go to Album", systemImage: "square.stack")
+                    if let album = track.albums?.first {
+                        NavigationLink(destination: AlbumView(album)) {
+                            Label("Go to Album", systemImage: "square.stack")
+                        }
                     }
                     
                     Button(action: {
@@ -97,11 +98,12 @@ struct TrackRowView: View {
                         Label("View Credits", systemImage: "person.2")
                     }
                     
-                    Button(role: .destructive, action: {
-                        // TODO: Implement remove from playlist functionality
-                        print("Remove from Playlist")
-                    }) {
-                        Label("Remove from Playlist", systemImage: "trash")
+                    if isPlaylistContext {
+                        Button(role: .destructive, action: {
+                            onRemoveFromPlaylist?()
+                        }) {
+                            Label("Remove from Playlist", systemImage: "trash")
+                        }
                     }
                     
                     Button(action: {
