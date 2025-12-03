@@ -105,7 +105,7 @@ struct PlaylistView: View {
     private func trackListView(tracks: MusicItemCollection<Track>) -> some View {
         VStack {
             ForEach(Array(tracks), id: \.id) { track in
-                TrackRowView(track: track, tracks: tracks)
+                PlaylistTrackRowView(track: track, tracks: tracks)
                     .environmentObject(appMusicPlayer)
             }
         }

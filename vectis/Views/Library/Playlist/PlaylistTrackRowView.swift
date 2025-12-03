@@ -8,7 +8,7 @@
 import SwiftUI
 import MusicKit
 
-struct TrackRowView: View {
+struct PlaylistTrackRowView: View {
     let track: Track
     let tracks: MusicItemCollection<Track>
     @EnvironmentObject private var appMusicPlayer: AppMusicPlayer
