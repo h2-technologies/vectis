@@ -24,15 +24,23 @@ struct HomeView: View {
                     if isLoading {
                         ProgressView().padding()
                     } else {
-                        LazyVStack(spacing: 10) {
-                            ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
-                                switch item {
-                                case .album(let album):
-                                    Text(album.title)
-                                case .playlist(let playlist):
-                                    Text(playlist.name)
-                                default:
-                                    EmptyView()
+                        ScrollView(.horizontal) {
+                            HStack {
+                                ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
+                                    switch item {
+                                    case .album(let album):
+                                        VStack(alignment: .leading) {
+                                            ArtworkImage(album.artwork!, width: 125, height: 125).cornerRadius(10)
+                                                
+                                            Text(album.title)
+                                            Text(album.artistName).font(.caption) //TODO: Set to gray
+                                        }
+                                       
+                                    case .playlist(let playlist):
+                                        Text(playlist.name)
+                                    default:
+                                        EmptyView()
+                                    }
                                 }
                             }
                         }
