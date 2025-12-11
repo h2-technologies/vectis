@@ -24,24 +24,59 @@ struct HomeView: View {
                     if isLoading {
                         ProgressView().padding()
                     } else {
-                        ScrollView(.horizontal) {
-                            HStack {
-                                ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
-                                    switch item {
-                                    case .album(let album):
-                                        VStack(alignment: .leading) {
-                                            ArtworkImage(album.artwork!, width: 125, height: 125).cornerRadius(10)
+                        VStack(alignment: .leading) {
+                            Text("Recently Played")
+                                .font(.headline)
+                                .padding(.bottom, 5)
+                            
+                            ScrollView(.horizontal) {
+                                HStack {
+                                    ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
+                                        switch item {
+                                        case .album(let album):
+                                            VStack(alignment: .leading) {
+                                                ArtworkImage(album.artwork!, width: 170, height: 170).cornerRadius(10)
+                                                    
+                                                if (album.title.count > 20) {
+                                                    Text(album.title.prefix(20) + "...")
+                                                        .font(.subheadline)
+                                                        .lineLimit(1)
+                                                        .foregroundStyle(.white)
+                                                } else {
+                                                    Text(album.title)
+                                                        .font(.subheadline)
+                                                        .lineLimit(1)
+                                                        .foregroundStyle(.white)
+                                                }
                                                 
-                                            Text(album.title)
-                                            Text(album.artistName).font(.caption) //TODO: Set to gray
+                                                
+                                                Text(album.artistName)
+                                                    .font(.caption)
+                                                    .foregroundStyle(.gray)
+                                            }
+                                           
+                                        case .playlist(let playlist):
+                                            VStack(alignment: .leading) {
+                                                if (playlist.artwork != nil) {
+                                                    ArtworkImage(playlist.artwork!, width: 170, height: 170).cornerRadius(10)
+                                                }
+                                                
+                                                Text(playlist.name)
+                                                    .font(.subheadline)
+                                                    .lineLimit(1)
+                                                    .foregroundStyle(.white)
+                                                
+                                                Text(playlist.curatorName ?? "")
+                                                    .font(.caption)
+                                                    .foregroundStyle(.gray)
+                                                
+                                                    
+                                            }
+                                        default:
+                                            EmptyView()
                                         }
-                                       
-                                    case .playlist(let playlist):
-                                        Text(playlist.name)
-                                    default:
-                                        EmptyView()
                                     }
-                                }
+                                }.padding(.bottom, 20)
                             }
                         }
                     }

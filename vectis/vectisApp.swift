@@ -12,20 +12,16 @@ import MusicKit
 struct vectisApp: App {
     @StateObject private var appMusicPlayer = AppMusicPlayer()
     
-    init() {
-        Task.detached {
-            let authorization = await MusicAuthorization.request()
-            if authorization == .denied {
-                //TODO: Alert user to denied
-            }
-        }
-        
-    }
-    
     var body: some Scene {
         WindowGroup {
             MainView()
                 .environmentObject(appMusicPlayer)
+                .task {
+                    let authorization = await MusicAuthorization.request()
+                    if authorization == .denied {
+                        //TODO: Implement alert
+                    }
+                }
         }
     }
 }
