@@ -9,7 +9,7 @@ import SwiftUI
 import MusicKit
 
 struct HomeView: View {
-    @State var items: [RecentlyPlayedMusicItem] = []
+    @State var recentItems: [RecentlyPlayedMusicItem] = []
     @State private var isLoading = false
     
     var body: some View {
@@ -31,7 +31,7 @@ struct HomeView: View {
                             
                             ScrollView(.horizontal) {
                                 HStack {
-                                    ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
+                                    ForEach(Array(recentItems.enumerated()), id: \.element.id) { index, item in
                                         switch item {
                                         case .album(let album):
                                             VStack(alignment: .leading) {
@@ -84,7 +84,7 @@ struct HomeView: View {
                 .padding(.leading, 15)
             }
         }.task {
-            if items.isEmpty {
+            if recentItems.isEmpty {
                 await loadRecent()
             }
         }
@@ -99,8 +99,7 @@ struct HomeView: View {
             async let recentFetch = MusicRecentlyPlayedRequest<RecentlyPlayedMusicItem>().response()
             let recentResponse = try await recentFetch
             
-            print("Recent Items: \(recentResponse.items)")
-            items = Array(recentResponse.items)
+            recentItems = Array(recentResponse.items)
             
         } catch {
             print("Failed to load recent playlists: \(error)")
