@@ -85,6 +85,7 @@ struct NowPlayingWidget: View {
                         .resizable()
                         .scaledToFit()
                         .frame(width: 32, height: 32)
+												.cornerRadius(10)
                     
                     VStack(alignment: .leading) {
                         Text("Nothing Playing")
@@ -94,7 +95,7 @@ struct NowPlayingWidget: View {
                 VStack(alignment: .leading) {
                     if let song = appMusicPlayer.currentSong {
                         Text(song.title)
-                            .font(.headline)
+												.font(.system(size: 10))
                         Text(song.artistName)
                             .font(.subheadline)
                             .foregroundStyle(.secondary)
@@ -106,7 +107,6 @@ struct NowPlayingWidget: View {
                 Button(action: {
                     if appMusicPlayer.status == .playing {
                         appMusicPlayer.pause()
-                        //TODO: Implement pause function
                     } else {
                         Task {
                             await appMusicPlayer.play()
@@ -130,7 +130,7 @@ struct NowPlayingWidget: View {
                     Image(systemName: "forward.fill")
                 }
             }
-            .padding(15)
+            .padding(10)
         }
         .buttonStyle(PlainButtonStyle())
         .background(.ultraThinMaterial)
