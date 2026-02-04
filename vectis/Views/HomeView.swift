@@ -108,8 +108,6 @@ struct HomeView: View {
 			
 			data = response.recommendations
 			
-			print(data)
-			
 		} catch {
 			print("Failed to load data: \(error)")
 		}
