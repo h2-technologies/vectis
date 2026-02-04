@@ -9,35 +9,39 @@ import MusicKit
 import SwiftUI
 
 struct HomeView: View {
-  @State var recentlyPlayedItems: [RecentlyPlayedMusicItem] = []
-  @State private var isLoading: Bool = false
-
-  var body: some View {
-    NavigationStack {
-      ScrollView {
-        VStack(alignment: .leading) {
-          Text("Home")
-            .font(.title)
-            .fontWeight(.bold)
-            .padding(.bottom, 15)
-
-          if isLoading {
-            ProgressView().padding()
-          } else {
-            VStack(alignment: .leading) {
-              Text("Recently Played")
-                .font(.headline)
-                .padding(.bottom, 5)
-
-              ScrollView(.horizontal) {
-                HStack {
-                  ForEach(Array(recentlyPlayedItems.enumerated()), id: \.element.id) { index, item in
-                    switch item {
-                    case .album(let album):
+	@State var data: MusicItemCollection<MusicPersonalRecommendation> = []
+	@State private var isLoading: Bool = false
+	
+	// Top picks (personal recommendations) - store simple titles to avoid tight coupling
+	@State private var topPickTitles: [String] = []
+	@State private var isLoadingTopPicks: Bool = false
+	
+	var body: some View {
+		NavigationStack {
+			ScrollView {
+				VStack(alignment: .leading) {
+					Text("Home")
+						.font(.title)
+						.fontWeight(.bold)
+						.padding(.bottom, 15)
+					
+					if (isLoading) {
+						ProgressView().padding()
+					} else {
+						ForEach(Array(data.enumerated()), id: \.element.id) { index, recommendation in
+							Text(recommendation.title ?? "")
+								.font(.headline)
+								.padding(.bottom, 5)
+							
+							ScrollView(.horizontal) {
+								HStack {
+									ForEach(Array(recommendation.items.enumerated()), id: \.element.id) { index, item in
+										switch item {
+										case .album(let album):
 											NavigationLink(destination: AlbumView(album)) {
 												VStack(alignment: .leading) {
 													ArtworkImage(album.artwork!, width: 170, height: 170).cornerRadius(10)
-
+													
 													if album.title.count > 20 {
 														Text(album.title.prefix(20) + "...")
 															.font(.subheadline)
@@ -49,13 +53,13 @@ struct HomeView: View {
 															.lineLimit(1)
 															.foregroundStyle(.white)
 													}
-
+													
 													Text(album.artistName)
 														.font(.caption)
 														.foregroundStyle(.gray)
 												}
 											}
-                    case .playlist(let playlist):
+										case .playlist(let playlist):
 											NavigationLink(destination: PlaylistView(playlist)) {
 												VStack(alignment: .leading) {
 													if playlist.artwork != nil {
@@ -73,56 +77,46 @@ struct HomeView: View {
 													
 												}
 											}
-                    default:
-                      EmptyView()
-                    }
-                  }
-                }.padding(.bottom, 20)
-              }
-            }
-						
-						VStack(alignment: .leading) {
-							Text("Recently Added")
-								.font(.headline)
-								.padding(.bottom, 5)
-							
-							ScrollView(.horizontal) {
-								HStack {
-									
+										default:
+											EmptyView()
+										}
+										
+									}
 								}
 							}
 						}
-          }
-        }
-        .padding(.leading, 15)
-      }
-    }.task {
-      if recentlyPlayedItems.isEmpty {
-        await loadRecentlyPlayed()
-      }
-    }
-  }
-
-  @MainActor
-  func loadRecentlyPlayed() async {
-    isLoading = true
-    defer { isLoading = false }
-
-    do {
-      async let recentFetch = MusicRecentlyPlayedRequest<RecentlyPlayedMusicItem>().response()
-      let recentResponse = try await recentFetch
-
-      recentlyPlayedItems = Array(recentResponse.items)
-
-    } catch {
-      print("Failed to load recent playlists: \(error)")
-    }
+					}
+				}
+				.padding(.leading, 15)
+			}
+		}
+		.task {
+			// Load recently played and top picks once on appear (if not already loaded)
+			if data.isEmpty {
+				await loadData()
+			}
+		}
+	}
+	
+	@MainActor
+	func loadData() async {
+		isLoading = true
+		defer { isLoading = false }
 		
-		
-  }
+		do {
+			let response = try await MusicPersonalRecommendationsRequest().response()
+			
+			data = response.recommendations
+			
+			print(data)
+			
+		} catch {
+			print("Failed to load data: \(error)")
+		}
+	}
 	
 }
 
 #Preview {
-  HomeView()
+	HomeView()
 }
