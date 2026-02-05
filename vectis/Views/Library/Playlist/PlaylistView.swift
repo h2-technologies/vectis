@@ -22,7 +22,7 @@ struct PlaylistView: View {
         ScrollView {
             if let artwork = playlist.artwork {
                 ArtworkImage(artwork, width: 225, height: 225)
-                    .cornerRadius(20)
+                    .clipShape(.rect(cornerRadius: 20))
             }
             
             
@@ -54,7 +54,7 @@ struct PlaylistView: View {
                 }
                 .frame(width: 150, alignment: .center)
                 .background(Color(red: 40/255, green: 45/255, blue: 45/255))
-                .cornerRadius(20)
+                .clipShape(.rect(cornerRadius: 20))
                 
                 
                 Button {
@@ -75,7 +75,7 @@ struct PlaylistView: View {
                 }
                 .frame(width: 150, alignment: .center)
                 .background(Color(red: 40/255, green: 45/255, blue: 45/255))
-                .cornerRadius(20)
+                .clipShape(.rect(cornerRadius: 20))
             }.padding(.top, 10)
             
             Rectangle().frame(width:350, height: 1)
@@ -84,61 +84,10 @@ struct PlaylistView: View {
                 .padding(.bottom, 5)
             
             if let tracks = playlist.tracks {
-                VStack {
-                    ForEach(tracks, id: \.id) { track in
-                        Button(action: {
-                            Task {
-                                await appMusicPlayer.enqueuePlaylist(playlist: tracks, firstSong: track)
-                                await appMusicPlayer.play()
-                            }
-                        }) {
-                                //TODO: implement star for favorites
-                                //reference issue #20
-                                if let trackArtwork = track.artwork {
-                                    ArtworkImage(trackArtwork, width: 75)
-                                        .frame(width: 50, height: 50)
-                                        .cornerRadius(5)
-                                        .padding(.trailing, 5)
-                                }
-                                
-                                
-                                VStack(alignment: .leading) {
-                                    Text(track.title)
-                                        .lineLimit(1)
-                                        
-                                    Text(track.artistName)
-                                        .font(.caption)
-                                        .foregroundStyle(.gray)
-                                }
-                                
-                                Spacer()
-                                
-                                Button(action: {
-                                    //TODO: Add action menu
-                                    //Ref issue #21
-                                    print("Menu")
-                                }) {
-                                    Image(systemName: "ellipsis")
-                                }
-                                .padding(.trailing, 5)
-                            
-                            
-                        }
-                        .padding(.leading, 4)
-                        .padding(.trailing, 4)
-                        .padding(.bottom, 2.5)
-                        .foregroundStyle(.white)
-                        
-                        Rectangle().frame(width: 350, height: 1)
-                            .foregroundStyle(Color(red: 69/255, green: 74/255, blue: 82/255))
-                    }
-                    
-                }
+                trackListView(tracks: tracks)
             }
             
             //TODO: Add an "Add Songs" button
-            
-            //TODO: Display song duration
             
             Spacer()
         }
@@ -150,7 +99,39 @@ struct PlaylistView: View {
             }
         }
         .padding(.leading, 10)
-        .padding(.trailing, 10)
     }
     
+    @ViewBuilder
+    private func trackListView(tracks: MusicItemCollection<Track>) -> some View {
+        VStack {
+            ForEach(Array(tracks), id: \.id) { track in
+                PlaylistTrackRowView(track: track, tracks: tracks)
+                    .environmentObject(appMusicPlayer)
+            }
+        }
+        HStack {
+            Text(formatPlaylistDuration(tracks.count, tracks.reduce(0.0) { $0 + ($1.duration ?? 0) }))
+                .font(.caption)
+                .foregroundStyle(Color.gray)
+            Spacer()
+        }
+        .padding(.top, 15)
+        .padding(.bottom, 10)
+        .padding(.leading, 4)
+    }
+    
+    private func formatPlaylistDuration(_ songCount: Int, _ totalDuration: TimeInterval) -> String {
+        let hours = Int(totalDuration) / 3600
+        let minutes = (Int(totalDuration) % 3600) / 60
+        
+        let songText = songCount == 1 ? "song" : "songs"
+        let hourText = hours == 1 ? "hour" : "hours"
+        let minuteText = minutes == 1 ? "minute" : "minutes"
+        
+        if hours > 0 {
+            return "\(songCount) \(songText), \(hours) \(hourText) \(minutes) \(minuteText)"
+        } else {
+            return "\(songCount) \(songText), \(minutes) \(minuteText)"
+        }
+    }
 }
