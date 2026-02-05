@@ -109,8 +109,6 @@ struct PlaylistView: View {
                     .environmentObject(appMusicPlayer)
             }
         }
-        
-        // Playlist duration at the bottom
         HStack {
             Text(formatPlaylistDuration(tracks.count, tracks.reduce(0.0) { $0 + ($1.duration ?? 0) }))
                 .font(.caption)
