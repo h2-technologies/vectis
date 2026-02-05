@@ -99,19 +99,6 @@ struct PlaylistView: View {
             }
         }
         .padding(.leading, 10)
-				.toolbar {
-					Menu() {
-						Button {
-							print("click")
-						} label: {
-							Label("Credits", systemImage: "info.circle")
-						}
-					} label: {
-						Image(systemName: "ellipsis")
-					}
-					
-					
-				}
     }
     
     @ViewBuilder
