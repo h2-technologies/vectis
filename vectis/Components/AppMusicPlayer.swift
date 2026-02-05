@@ -160,6 +160,12 @@ public class AppMusicPlayer: ObservableObject {
 	}
 	
 	@MainActor
+	func enqueueStation(_ station: Station) {
+		player.queue = ApplicationMusicPlayer.Queue()
+		player.queue = [station]
+	}
+	
+	@MainActor
 	func shuffle(_ mode: Bool) {
 		if mode {
 			player.state.shuffleMode = .songs

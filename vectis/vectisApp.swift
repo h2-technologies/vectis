@@ -39,9 +39,6 @@ struct MainView: View {
                 Tab("Home", systemImage: "house") {
                     HomeView()
                 }
-                Tab("Radio", systemImage: "antenna.radiowaves.left.and.right") {
-                    
-                }
                 Tab("Library", systemImage: "play.square.stack") {
                     LibraryView()
                 }
