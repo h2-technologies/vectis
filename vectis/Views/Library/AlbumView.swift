@@ -11,6 +11,7 @@ import MusicKit
 struct AlbumView: View {
     
     @State var album: Album
+	@State var fullAlbum: Album?
     
     @EnvironmentObject private var appMusicPlayer: AppMusicPlayer
     
@@ -136,9 +137,16 @@ struct AlbumView: View {
 										.foregroundStyle(Color(red: 69/255, green: 74/255, blue: 82/255))
 								}
 								
-								// Album duration at the bottom
+								
 								let totalDuration = tracks.reduce(0.0) { $0 + ($1.duration ?? 0) }
 								VStack(alignment: .leading) {
+									if (fullAlbum != nil) {
+										if (fullAlbum!.trackCount != tracks.count) {
+											NavigationLink(destination: AlbumView(fullAlbum!)) {
+												Text("Show Complete Album")
+											}
+										}
+									}
 									Text(formatAlbumDuration(tracks.count, totalDuration))
 										.font(.caption)
 										.foregroundStyle(Color.gray)
@@ -149,7 +157,8 @@ struct AlbumView: View {
 								}
 								.padding(.top, 15)
 								.padding(.bottom, 10)
-								.padding(.leading, 4)
+								.padding(.leading)
+								.frame(maxWidth: .infinity, alignment: .leading)
 							}
 							
 							Spacer()
@@ -163,6 +172,10 @@ struct AlbumView: View {
         .task(id: album.id) {
             do {
                 self.album = try await album.with(.tracks)
+				let request = MusicCatalogSearchRequest(term: album.title, types: [Album.self])
+				let response = try await request.response()
+				self.fullAlbum = response.albums.filter { $0.artistName == album.artistName }.first
+				
             } catch {
                 print("Error fetching album tracks: \(error)")
             }
