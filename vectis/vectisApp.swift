@@ -18,7 +18,9 @@ struct vectisApp: App {
                 .environmentObject(appMusicPlayer)
                 .task {
                     let authorization = await MusicAuthorization.request()
-                    if authorization == .denied {
+					if authorization == .authorized {
+						appMusicPlayer.startObserving()
+					} else if authorization == .denied {
                         //TODO: Implement alert
                     }
                 }

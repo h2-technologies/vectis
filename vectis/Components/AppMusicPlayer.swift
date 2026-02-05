@@ -11,7 +11,7 @@ import Combine
 import AVFoundation
 
 public class AppMusicPlayer: ObservableObject {
-	private var
+	private var isObserving = false
 	private var player = ApplicationMusicPlayer.shared
 	
 	@Published public var currentSong: Song? = nil
@@ -25,18 +25,25 @@ public class AppMusicPlayer: ObservableObject {
 	init() {
 		// Configure audio session for background playback
 		configureAudioSession()
+	}
+	
+	@MainActor
+	func startObserving() {
+		guard !isObserving else { return }
+		isObserving = true
 		
-		player.state.objectWillChange.sink { [weak self] in
-			Task { @MainActor in
-				self?.updatePlayerState()
+		Task {
+			for await _ in player.state.objectWillChange.values {
+				self.updatePlayerState()
 			}
-		}.store(in: &cancellables)
+		}
 		
-		player.queue.objectWillChange.sink { [weak self] in
-			Task { @MainActor in
-				self?.updatePlayerState()
+		Task {
+			for await _ in player.queue.objectWillChange.values {
+				self.updatePlayerState()
 			}
-		}.store(in: &cancellables)
+		}
+
 	}
 	
 	private func configureAudioSession() {
