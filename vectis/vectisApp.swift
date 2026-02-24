@@ -31,6 +31,8 @@ struct vectisApp: App {
 struct MainView: View {
     
     @EnvironmentObject private var appMusicPlayer: AppMusicPlayer
+	@StateObject private var libraryManager = LibraryManager()
+	
     @State private var showNowPlaying = false
     
     var body: some View {
@@ -54,6 +56,7 @@ struct MainView: View {
         .sheet(isPresented: $showNowPlaying) {
             NowPlayingView()
                 .environmentObject(appMusicPlayer)
+				.environmentObject(libraryManager)
         }
     }
 }

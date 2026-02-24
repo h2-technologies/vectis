@@ -11,7 +11,10 @@ import MusicKit
 struct PlaylistTrackRowView: View {
     let track: Track
     let tracks: MusicItemCollection<Track>
+	
     @EnvironmentObject private var appMusicPlayer: AppMusicPlayer
+	@EnvironmentObject private var libraryManager: LibraryManager
+
     @State private var catalogURL: URL?
     @State private var isLoadingURL = false
     
@@ -42,13 +45,29 @@ struct PlaylistTrackRowView: View {
                         }
                         
                         Spacer()
+						
+						Menu {
+							Button {
+								Task {
+									let result = await libraryManager.removeTrackFromPlaylist(track, playlist: playlist)
+								}
+							} label: {
+								Label("Remove from Playlist", systemImage: "trash")
+							}
+							
+						} label: {
+							Image(systemName: "ellipsis")
+						}
+						.padding(.trailing, 15)
+						
+						
                     }
                 }
                 .foregroundStyle(.white)
             }
             .padding(.leading, 4)
             .padding(.trailing, 4)
-            .padding(.bottom, 2.5)
+			.padding(.bottom, 5)
             
             Rectangle()
                 .frame(width: 350, height: 1)
