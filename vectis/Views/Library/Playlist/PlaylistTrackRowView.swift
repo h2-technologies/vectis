@@ -10,7 +10,7 @@ import MusicKit
 
 struct PlaylistTrackRowView: View {
     let track: Track
-    let tracks: MusicItemCollection<Track>
+	let playlist: Playlist
 	
     @EnvironmentObject private var appMusicPlayer: AppMusicPlayer
 	@EnvironmentObject private var libraryManager: LibraryManager
@@ -23,7 +23,7 @@ struct PlaylistTrackRowView: View {
             HStack {
                 Button(action: {
                     Task {
-                        await appMusicPlayer.enqueuePlaylist(playlist: tracks, firstSong: track)
+						await appMusicPlayer.enqueuePlaylist(playlist: playlist.tracks!, firstSong: track)
                         await appMusicPlayer.play()
                     }
                 }) {
@@ -57,6 +57,8 @@ struct PlaylistTrackRowView: View {
 							
 						} label: {
 							Image(systemName: "ellipsis")
+								.frame(width: 44, height: 44)
+								.contentShape(Rectangle())
 						}
 						.padding(.trailing, 15)
 						

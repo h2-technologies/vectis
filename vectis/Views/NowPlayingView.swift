@@ -7,6 +7,7 @@
 
 import SwiftUI
 import MusicKit
+import MediaPlayer
 
 struct NowPlayingView: View {
     @EnvironmentObject private var appMusicPlayer: AppMusicPlayer
@@ -112,7 +113,7 @@ struct NowPlayingView: View {
                             Image(systemName: "music.note")
                                 .resizable()
                                 .scaledToFit()
-                                .frame(width: 100, height: 100)
+                                .frame(width: 300, height: 300)
                                 .foregroundStyle(.secondary)
                             
                             Text("Nothing Playing")
@@ -144,10 +145,10 @@ struct NowPlayingView: View {
                                 }
                             }
                         }) {
-                            Image(systemName: appMusicPlayer.status == .playing ? "pause.circle.fill" : "play.circle.fill")
+                            Image(systemName: appMusicPlayer.status == .playing ? "pause.fill" : "play.fill")
                                 .resizable()
                                 .scaledToFit()
-                                .frame(width: 70, height: 70)
+                                .frame(width: 30, height: 30)
                         }
                         .disabled(appMusicPlayer.currentSong == nil)
                         
@@ -164,20 +165,33 @@ struct NowPlayingView: View {
                         .disabled(appMusicPlayer.currentSong == nil)
                     }
                     .padding(.top, 20)
-                    
-                    // Additional Controls (Lyrics, Queue & AirPlay)
+					
+					//MARK: - Volume Controls
+					
+					HStack {
+						SystemVolumeSlider()
+							.frame(maxWidth: .infinity)
+							.frame(height: 40)
+							.padding(.horizontal)
+					}
+					.padding(.horizontal)
+					
+					
+					//MARK: - Additional Controls
                     HStack(spacing: 50) {
+						Spacer()
+						
                         Button(action: {
                             // TODO: Show lyrics
                         }) {
                             VStack(spacing: 4) {
                                 Image(systemName: "quote.bubble")
                                     .font(.title2)
-                                Text("Lyrics")
-                                    .font(.caption)
                             }
                         }
                         .disabled(appMusicPlayer.currentSong == nil)
+						
+						Spacer()
                         
                         Button(action: {
                             // TODO: Show AirPlay picker
@@ -185,11 +199,11 @@ struct NowPlayingView: View {
                             VStack(spacing: 4) {
                                 Image(systemName: "airplayaudio")
                                     .font(.title2)
-                                Text("AirPlay")
-                                    .font(.caption)
                             }
                         }
                         .disabled(appMusicPlayer.currentSong == nil)
+						
+						Spacer()
                         
                         Button(action: {
                             showingQueue = true
@@ -197,15 +211,15 @@ struct NowPlayingView: View {
                             VStack(spacing: 4) {
                                 Image(systemName: "list.bullet")
                                     .font(.title2)
-                                Text("Queue")
-                                    .font(.caption)
                             }
                         }
                         .disabled(appMusicPlayer.currentSong == nil)
+						
+						Spacer()
                     }
                     .padding(.top, 30)
                     
-                    Spacer()
+                    
                 }
                 .padding()
             }
@@ -272,15 +286,13 @@ private struct QueueView: View {
                 }
             }
             .listStyle(.insetGrouped)
+            .environment(\.editMode, .constant(.active))
             .navigationTitle("Queue")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Done") {
                         dismiss()
                     }
-                }
-                ToolbarItem(placement: .topBarTrailing) {
-                    EditButton()
                 }
                 ToolbarItem(placement: .bottomBar) {
                     Button("Clear Up Next") {

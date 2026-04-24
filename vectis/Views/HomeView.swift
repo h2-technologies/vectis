@@ -13,6 +13,7 @@ struct HomeView: View {
 	@State private var isLoading: Bool = false
 	
 	@EnvironmentObject private var appMusicPlayer: AppMusicPlayer
+	@EnvironmentObject private var libraryManager: LibraryManager
 	
 	// Top picks (personal recommendations) - store simple titles to avoid tight coupling
 	@State private var topPickTitles: [String] = []
