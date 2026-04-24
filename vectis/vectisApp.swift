@@ -11,11 +11,13 @@ import MusicKit
 @main
 struct vectisApp: App {
     @StateObject private var appMusicPlayer = AppMusicPlayer()
+	@StateObject private var libraryManager = LibraryManager()
     
     var body: some Scene {
         WindowGroup {
             MainView()
                 .environmentObject(appMusicPlayer)
+				.environmentObject(libraryManager)
                 .task {
                     let authorization = await MusicAuthorization.request()
 					if authorization == .authorized {
@@ -31,6 +33,8 @@ struct vectisApp: App {
 struct MainView: View {
     
     @EnvironmentObject private var appMusicPlayer: AppMusicPlayer
+	@EnvironmentObject private var libraryManager: LibraryManager
+	
     @State private var showNowPlaying = false
     
     var body: some View {
@@ -54,6 +58,7 @@ struct MainView: View {
         .sheet(isPresented: $showNowPlaying) {
             NowPlayingView()
                 .environmentObject(appMusicPlayer)
+				.environmentObject(libraryManager)
         }
     }
 }

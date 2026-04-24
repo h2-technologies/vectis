@@ -7,12 +7,14 @@
 
 import SwiftUI
 import MusicKit
+import MediaPlayer
 
 struct NowPlayingView: View {
     @EnvironmentObject private var appMusicPlayer: AppMusicPlayer
     @Environment(\.dismiss) private var dismiss
     @State private var isSeeking = false
     @State private var seekPosition: TimeInterval = 0
+    @State private var showingQueue = false
     
     var body: some View {
         NavigationStack {
@@ -111,7 +113,7 @@ struct NowPlayingView: View {
                             Image(systemName: "music.note")
                                 .resizable()
                                 .scaledToFit()
-                                .frame(width: 100, height: 100)
+                                .frame(width: 300, height: 300)
                                 .foregroundStyle(.secondary)
                             
                             Text("Nothing Playing")
@@ -143,10 +145,10 @@ struct NowPlayingView: View {
                                 }
                             }
                         }) {
-                            Image(systemName: appMusicPlayer.status == .playing ? "pause.circle.fill" : "play.circle.fill")
+                            Image(systemName: appMusicPlayer.status == .playing ? "pause.fill" : "play.fill")
                                 .resizable()
                                 .scaledToFit()
-                                .frame(width: 70, height: 70)
+                                .frame(width: 30, height: 30)
                         }
                         .disabled(appMusicPlayer.currentSong == nil)
                         
@@ -163,20 +165,33 @@ struct NowPlayingView: View {
                         .disabled(appMusicPlayer.currentSong == nil)
                     }
                     .padding(.top, 20)
-                    
-                    // Additional Controls (Lyrics, Queue & AirPlay)
+					
+					//MARK: - Volume Controls
+					
+					HStack {
+						SystemVolumeSlider()
+							.frame(maxWidth: .infinity)
+							.frame(height: 40)
+							.padding(.horizontal)
+					}
+					.padding(.horizontal)
+					
+					
+					//MARK: - Additional Controls
                     HStack(spacing: 50) {
+						Spacer()
+						
                         Button(action: {
                             // TODO: Show lyrics
                         }) {
                             VStack(spacing: 4) {
                                 Image(systemName: "quote.bubble")
                                     .font(.title2)
-                                Text("Lyrics")
-                                    .font(.caption)
                             }
                         }
                         .disabled(appMusicPlayer.currentSong == nil)
+						
+						Spacer()
                         
                         Button(action: {
                             // TODO: Show AirPlay picker
@@ -184,27 +199,27 @@ struct NowPlayingView: View {
                             VStack(spacing: 4) {
                                 Image(systemName: "airplayaudio")
                                     .font(.title2)
-                                Text("AirPlay")
-                                    .font(.caption)
                             }
                         }
                         .disabled(appMusicPlayer.currentSong == nil)
+						
+						Spacer()
                         
                         Button(action: {
-                            // TODO: Show queue
+                            showingQueue = true
                         }) {
                             VStack(spacing: 4) {
                                 Image(systemName: "list.bullet")
                                     .font(.title2)
-                                Text("Queue")
-                                    .font(.caption)
                             }
                         }
                         .disabled(appMusicPlayer.currentSong == nil)
+						
+						Spacer()
                     }
                     .padding(.top, 30)
                     
-                    Spacer()
+                    
                 }
                 .padding()
             }
@@ -218,6 +233,10 @@ struct NowPlayingView: View {
                     }
                 }
             }
+            .sheet(isPresented: $showingQueue) {
+                QueueView()
+                    .environmentObject(appMusicPlayer)
+            }
         }
     }
     
@@ -225,6 +244,106 @@ struct NowPlayingView: View {
         let minutes = Int(time) / 60
         let seconds = Int(time) % 60
         return String(format: "%d:%02d", minutes, seconds)
+    }
+}
+
+private struct QueueView: View {
+    @EnvironmentObject private var appMusicPlayer: AppMusicPlayer
+    @Environment(\.dismiss) private var dismiss
+    
+    var body: some View {
+        NavigationStack {
+            List {
+                if let current = appMusicPlayer.currentEntry {
+                    Section("Now Playing") {
+                        QueueRow(entry: current, isCurrent: true)
+                    }
+                }
+                
+                Section("Up Next") {
+                    if appMusicPlayer.upNextEntries.isEmpty {
+                        Text("Queue is empty")
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(appMusicPlayer.upNextEntries) { entry in
+                            QueueRow(entry: entry, isCurrent: false)
+                                .swipeActions {
+                                    Button(role: .destructive) {
+                                        Task {
+                                            await appMusicPlayer.removeFromQueue(entryID: entry.id)
+                                        }
+                                    } label: {
+                                        Label("Remove", systemImage: "trash")
+                                    }
+                                }
+                        }
+                        .onMove { indices, newOffset in
+                            Task {
+                                await appMusicPlayer.moveUpNext(fromOffsets: indices, toOffset: newOffset)
+                            }
+                        }
+                    }
+                }
+            }
+            .listStyle(.insetGrouped)
+            .environment(\.editMode, .constant(.active))
+            .navigationTitle("Queue")
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+                ToolbarItem(placement: .bottomBar) {
+                    Button("Clear Up Next") {
+                        Task {
+                            await appMusicPlayer.clearUpNext()
+                        }
+                    }
+                    .disabled(appMusicPlayer.upNextEntries.isEmpty)
+                }
+            }
+        }
+    }
+}
+
+private struct QueueRow: View {
+    let entry: QueueEntry
+    let isCurrent: Bool
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            if let artwork = entry.song.artwork {
+                ArtworkImage(artwork, width: 44, height: 44)
+                    .frame(width: 44, height: 44)
+                    .cornerRadius(6)
+            } else {
+                ZStack {
+                    Color.gray.opacity(0.2)
+                    Image(systemName: "music.note")
+                        .foregroundStyle(.secondary)
+                }
+                .frame(width: 44, height: 44)
+                .cornerRadius(6)
+            }
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(entry.song.title)
+                    .font(.body)
+                    .lineLimit(1)
+                Text(entry.song.artistName)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+            
+            Spacer()
+            
+            if isCurrent {
+                Image(systemName: "speaker.wave.2.fill")
+                    .foregroundStyle(.secondary)
+            }
+        }
     }
 }
 

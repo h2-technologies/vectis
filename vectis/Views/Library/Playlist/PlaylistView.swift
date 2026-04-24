@@ -13,6 +13,7 @@ struct PlaylistView: View {
     @State var playlist: MusicItemCollection<Playlist>.Element
     
     @EnvironmentObject private var appMusicPlayer: AppMusicPlayer
+	@EnvironmentObject private var libraryManager: LibraryManager
     
     init(_ playlist: MusicItemCollection<Playlist>.Element) {
         self.playlist = playlist
@@ -105,7 +106,7 @@ struct PlaylistView: View {
     private func trackListView(tracks: MusicItemCollection<Track>) -> some View {
         VStack {
             ForEach(Array(tracks), id: \.id) { track in
-                PlaylistTrackRowView(track: track, tracks: tracks)
+                PlaylistTrackRowView(track: track, playlist: playlist)
                     .environmentObject(appMusicPlayer)
             }
         }
