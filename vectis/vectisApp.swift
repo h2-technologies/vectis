@@ -56,7 +56,7 @@ struct MainView: View {
             
         }
         .sheet(isPresented: $showNowPlaying) {
-            NowPlayingView()
+            NowPlayingSheetView()
                 .environmentObject(appMusicPlayer)
 				.environmentObject(libraryManager)
         }

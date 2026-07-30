@@ -8,7 +8,7 @@
 import SwiftUI
 import MusicKit
 
-struct NowPlayingView: View {
+struct NowPlayingSheetView: View {
 
     @State private var selectedTab: NowPlayingTab = .none
 
@@ -20,7 +20,7 @@ struct NowPlayingView: View {
         ZStack(alignment: .bottom) {
             TabView(selection: $selectedTab) {
 
-                Text("Now Playing View").tag(NowPlayingTab.none)
+                NowPlayingView().tag(NowPlayingTab.none)
 
                 Text("Lyrics View").tag(NowPlayingTab.lyrics)
 
@@ -29,7 +29,7 @@ struct NowPlayingView: View {
                 Text("Queue View").tag(NowPlayingTab.queue)
             }
 
-            //Custom tab bar
+            //MARK: Custom tab bar
             HStack(spacing: 90) {
                 ForEach(NowPlayingTab.visibleCases, id:\.self) { tab in
                     Button {
@@ -45,18 +45,21 @@ struct NowPlayingView: View {
                         VStack(spacing: 6) {
                             Image(systemName: tab.rawValue)
                                 .font(.system(size: 22, weight: .regular))
+                                
                         }
                     }
-                    .foregroundColor(selectedTab == tab ? .blue : .gray)
+                    .foregroundColor(tab == .lyrics ? HexToColor("#3B3B3B") : .gray)
+                    .disabled(tab == .lyrics)
                 }
             }
             .padding(.vertical, 12)
             .background(Capsule().fill(Color(.systemBackground)))
             .padding(.bottom, 10)
 
-        }
+        }.background(Color(.gray))
     }
-    
+
+
     private func formatTime(_ time: TimeInterval) -> String {
         let minutes = Int(time) / 60
         let seconds = Int(time) % 60
@@ -82,5 +85,5 @@ enum NowPlayingTab: String, CaseIterable {
 
 
 #Preview {
-    NowPlayingView()
+    NowPlayingSheetView()
 }
